@@ -1,0 +1,113 @@
+/* Pretendard variable font, dynamic subset (Korean-ready). Must precede other @import rules. */
+@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css");
+@import "tailwindcss";
+
+:root {
+  /* Surface */
+  --surface-light: #ffffff;
+  --surface-dark: #0e0b1f;
+  --surface-card: #f6f5fb;
+  --surface-overlay: rgba(14, 11, 31, 0.55);
+
+  /* Text */
+  --text-on-light: #1a1a2e;
+  --text-on-light-soft: #5a5a72;
+  --text-on-dark: #ffffff;
+  --text-on-dark-soft: #c9c5e0;
+
+  /* Brand purple */
+  --brand-50: #f3efff;
+  --brand-100: #e6dcff;
+  --brand-200: #c7b8ff;
+  --brand-400: #9b80ff;
+  --brand-500: #7c5cff;   /* primary CTA */
+  --brand-600: #6342f0;
+  --brand-700: #4a2dc8;
+
+  /* Gradient stops (legacy lavender → blue → pink) */
+  --grad-stop-1: #c7b8ff;
+  --grad-stop-2: #8ab4f8;
+  --grad-stop-3: #ffb8e0;
+
+  /* Borders */
+  --border-subtle: #e9e7f2;
+  --border-strong: #2a2640;
+}
+
+@theme inline {
+  --color-surface-light: var(--surface-light);
+  --color-surface-dark: var(--surface-dark);
+  --color-surface-card: var(--surface-card);
+  --color-surface-overlay: var(--surface-overlay);
+
+  --color-fg-light: var(--text-on-light);
+  --color-fg-light-soft: var(--text-on-light-soft);
+  --color-fg-dark: var(--text-on-dark);
+  --color-fg-dark-soft: var(--text-on-dark-soft);
+
+  --color-brand-50: var(--brand-50);
+  --color-brand-100: var(--brand-100);
+  --color-brand-200: var(--brand-200);
+  --color-brand-400: var(--brand-400);
+  --color-brand-500: var(--brand-500);
+  --color-brand-600: var(--brand-600);
+  --color-brand-700: var(--brand-700);
+
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+
+  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
+    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+
+  --radius-card: 1.5rem;        /* 24px */
+  --radius-card-lg: 2rem;       /* 32px */
+  --radius-pill: 999px;
+}
+
+/* Pastel gradient utility — used on featured cards */
+@utility gradient-card {
+  background: linear-gradient(
+    135deg,
+    var(--grad-stop-1) 0%,
+    var(--grad-stop-2) 50%,
+    var(--grad-stop-3) 100%
+  );
+}
+
+/* Hero gradient — used behind brand */
+@utility gradient-hero {
+  background: linear-gradient(
+    180deg,
+    var(--surface-dark) 0%,
+    #1a1235 100%
+  );
+}
+
+html, body {
+  height: 100%;
+  background: var(--surface-light);
+  color: var(--text-on-light);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+  /* Disable iOS rubber-band overscroll for kiosk feel */
+  overscroll-behavior: none;
+}
+
+/* Korean line breaking */
+body {
+  word-break: keep-all;
+  line-break: strict;
+}
+
+/* Tap highlights off for kiosk-like feel */
+button, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Disable text selection in kiosk mode (toggleable per element) */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
