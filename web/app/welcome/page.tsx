@@ -31,18 +31,31 @@ export default function WelcomePage() {
 
   return (
     <StageContainer variant="light">
-      <div className="flex-1 flex flex-col justify-center">
-        <p className="text-sm text-fg-light-soft mb-3">반갑습니다</p>
-        <h1 className="text-3xl font-bold tracking-tight mb-2">
-          {persona.name}
-          <span className="text-fg-light-soft text-xl font-normal">
-            {" "}
-            · {persona.role}
-          </span>
-        </h1>
+      <div className="flex-1 flex flex-col">
+        <div className="mt-2 animate-fade-up">
+          <p className="text-sm text-fg-light-soft mb-3">반갑습니다</p>
+          <h1 className="text-3xl font-bold tracking-tight mb-2">
+            {persona.name}
+            <span className="text-fg-light-soft text-xl font-normal">
+              {" "}
+              · {persona.role}
+            </span>
+          </h1>
+        </div>
+
+        {/* Character illustration — 자기성찰 테마 */}
+        <div className="flex justify-center my-6 animate-fade-up-delay-1">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/legacy/image (9).png"
+            alt=""
+            aria-hidden
+            className="w-44 h-44 object-contain"
+          />
+        </div>
 
         <div
-          className="mt-8 p-6 rounded-3xl"
+          className="p-6 rounded-3xl animate-fade-up-delay-2"
           style={{
             backgroundImage:
               "linear-gradient(135deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 50%, var(--grad-stop-3) 100%)",
@@ -53,7 +66,7 @@ export default function WelcomePage() {
           </p>
         </div>
 
-        <p className="mt-8 text-sm text-fg-light-soft leading-relaxed">
+        <p className="mt-6 text-sm text-fg-light-soft leading-relaxed animate-fade-up-delay-3">
           오늘은 두 가지 질문으로
           <br />
           나의 소명을 발견해보는 시간이에요.
@@ -62,7 +75,7 @@ export default function WelcomePage() {
         </p>
       </div>
 
-      <PrimaryButton onClick={() => router.push("/q/1")} className="mt-6">
+      <PrimaryButton onClick={() => router.push("/q/1")} className="mt-6 animate-fade-up-delay-3">
         시작하기
       </PrimaryButton>
     </StageContainer>

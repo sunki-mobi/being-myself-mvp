@@ -35,30 +35,47 @@ export default function HomePage() {
   return (
     <StageContainer variant="light">
       {/* Hero */}
-      <section className="mb-10 mt-4">
-        <p className="text-sm text-fg-light-soft mb-2">
-          하루 15분, 나에게 집중하는 시간
-        </p>
-        <h1 className="text-3xl font-bold tracking-tight">Being myself</h1>
-        <p className="mt-4 text-base text-fg-light-soft leading-relaxed">
-          오늘 단 두 가지 질문으로
-          <br />
-          나의 소명을 발견해보세요.
-        </p>
+      <section className="mb-10 mt-4 relative animate-fade-up">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1">
+            <p className="text-sm text-fg-light-soft mb-2">
+              하루 15분, 나에게 집중하는 시간
+            </p>
+            <h1 className="text-3xl font-bold tracking-tight">Being myself</h1>
+            <p className="mt-4 text-base text-fg-light-soft leading-relaxed">
+              오늘 단 두 가지 질문으로
+              <br />
+              나의 소명을 발견해보세요.
+            </p>
+          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/legacy/image (14).png"
+            alt=""
+            aria-hidden
+            className="w-24 h-24 object-contain flex-shrink-0 mt-2"
+          />
+        </div>
       </section>
 
       {/* Persona cards */}
       <section className="flex-1 flex flex-col gap-4">
-        <p className="text-sm font-medium text-fg-light-soft mb-1">
+        <p className="text-sm font-medium text-fg-light-soft mb-1 animate-fade-up-delay-1">
           누구로 시작하시겠어요?
         </p>
         {PERSONA_ORDER.map((id, idx) => {
           const p = PERSONAS[id];
+          const delayClass =
+            idx === 0
+              ? "animate-fade-up-delay-1"
+              : idx === 1
+                ? "animate-fade-up-delay-2"
+                : "animate-fade-up-delay-3";
           return (
             <button
               key={id}
               onClick={() => selectPersona(id)}
-              className="text-left p-5 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all no-select"
+              className={`text-left p-5 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all no-select ${delayClass}`}
               style={{
                 backgroundImage: `linear-gradient(${135 + idx * 30}deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 50%, var(--grad-stop-3) 100%)`,
               }}

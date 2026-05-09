@@ -72,10 +72,10 @@ export default function ReportPage() {
   const { persona, report, headline } = data;
 
   return (
-    <main className="min-h-screen w-full flex justify-center bg-surface-light text-fg-light">
-      <div className="w-full max-w-md flex flex-col">
+    <main className="min-h-screen w-full flex justify-center bg-[#f6f4fb] lg:bg-gradient-to-b lg:from-[#f6f4fb] lg:to-[#ece8f5]">
+      <div className="w-full max-w-md flex flex-col bg-surface-light text-fg-light lg:rounded-3xl lg:overflow-hidden lg:my-8 lg:min-h-[820px] lg:shadow-xl lg:shadow-brand-200/30">
         {/* Dark hero — 와우 모먼트가 박히는 곳 */}
-        <section className="gradient-hero text-fg-dark px-6 pt-12 pb-12 rounded-b-[2rem]">
+        <section className="gradient-hero text-fg-dark px-6 pt-12 pb-12 rounded-b-[2rem] animate-fade-up">
           <p className="text-xs font-medium text-fg-dark-soft mb-3">
             {persona.name} · {persona.role}
           </p>
@@ -89,21 +89,29 @@ export default function ReportPage() {
 
         {/* Body — Part 1/2/3 */}
         <section className="flex-1 px-6 py-10 flex flex-col gap-8">
-          {report.parts.map((part, idx) => (
-            <article key={idx}>
-              <p className="text-xs font-medium text-brand-500 mb-2">
-                #셀프인터뷰
-              </p>
-              <h3 className="text-xl font-bold mb-3">{part.heading}</h3>
-              <p className="text-base leading-relaxed text-fg-light/85 whitespace-pre-wrap">
-                {part.body}
-              </p>
-            </article>
-          ))}
+          {report.parts.map((part, idx) => {
+            const delayClass =
+              idx === 0
+                ? "animate-fade-up-delay-1"
+                : idx === 1
+                  ? "animate-fade-up-delay-2"
+                  : "animate-fade-up-delay-3";
+            return (
+              <article key={idx} className={delayClass}>
+                <p className="text-xs font-medium text-brand-500 mb-2">
+                  #셀프인터뷰
+                </p>
+                <h3 className="text-xl font-bold mb-3">{part.heading}</h3>
+                <p className="text-base leading-relaxed text-fg-light/85 whitespace-pre-wrap">
+                  {part.body}
+                </p>
+              </article>
+            );
+          })}
 
           {/* Insight + keywords */}
           <article
-            className="p-5 rounded-3xl"
+            className="p-5 rounded-3xl animate-fade-up-delay-3"
             style={{
               backgroundImage:
                 "linear-gradient(135deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 50%, var(--grad-stop-3) 100%)",
@@ -127,6 +135,17 @@ export default function ReportPage() {
             </div>
           </article>
         </section>
+
+        {/* 명상 일러스트 — "잠시 머무는 시간" */}
+        <div className="flex justify-center pb-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/legacy/image (15).png"
+            alt=""
+            aria-hidden
+            className="w-32 h-32 object-contain"
+          />
+        </div>
 
         {/* Reset CTA — 다음 방문자를 위해 */}
         <section className="px-6 pb-10">
