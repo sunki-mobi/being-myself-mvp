@@ -34,7 +34,7 @@ export default function ReportPage() {
   useEffect(() => {
     if (!hydrated) return;
     if (!state.personaId || !state.answers.q1 || !state.answers.q2) {
-      router.replace("/");
+      router.replace("/demo");
     }
   }, [hydrated, state, router]);
 
@@ -62,7 +62,7 @@ export default function ReportPage() {
 
   function onReset() {
     reset();
-    router.push("/");
+    router.push("/demo");
   }
 
   if (!hydrated || !data) {

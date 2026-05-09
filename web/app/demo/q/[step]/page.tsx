@@ -38,7 +38,7 @@ export default function QuestionPage() {
   useEffect(() => {
     if (!hydrated) return;
     if (!state.personaId || !validStep) {
-      router.replace("/");
+      router.replace("/demo");
     }
   }, [hydrated, state.personaId, validStep, router]);
 
@@ -75,9 +75,9 @@ export default function QuestionPage() {
     if (!selected) return;
     setAnswer(stepIdx, selected);
     if (stepNum === 1) {
-      router.push("/q/2");
+      router.push("/demo/q/2");
     } else {
-      router.push("/report");
+      router.push("/demo/report");
     }
   }
 

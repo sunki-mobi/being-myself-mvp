@@ -19,7 +19,7 @@ export default function WelcomePage() {
   // 페르소나가 안 잡혀 있으면 홈으로 보냄 (직접 URL 접근 방어)
   useEffect(() => {
     if (hydrated && !state.personaId) {
-      router.replace("/");
+      router.replace("/demo");
     }
   }, [hydrated, state.personaId, router]);
 
@@ -75,7 +75,7 @@ export default function WelcomePage() {
         </p>
       </div>
 
-      <PrimaryButton onClick={() => router.push("/q/1")} className="mt-6 animate-fade-up-delay-3">
+      <PrimaryButton onClick={() => router.push("/demo/q/1")} className="mt-6 animate-fade-up-delay-3">
         시작하기
       </PrimaryButton>
     </StageContainer>
