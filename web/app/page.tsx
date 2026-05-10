@@ -1,101 +1,98 @@
 "use client";
 
 import Link from "next/link";
-import { StageContainer } from "@/components/StageContainer";
 
 /**
- * NEW / — 트랙 선택 splash
+ * S-00 스플래시 / 표지 (기획안 §6.2 기준).
  *
- * 두 가지 진입점을 제공:
- *   1. /demo  — 박람회 게스트 데모 (페르소나 기반, 5분 종단 경험)
- *   2. /me    — 본인 데이터로 시작 (Phase B — 자유 텍스트 대화 + 누적 보고서)
+ * 다크 보라 hero가 화면을 가득 채우는 표지 톤. Being Myself 로고 + 슬로건 +
+ * 두 진입 버튼:
+ *   - "체험해보기 (게스트)" → /demo  (박람회 방문자)
+ *   - "내 데이터로 시작 (로그인)" → /me  (모비니티 내부 구성원 / 본인 시연)
  *
- * 박람회 운영자는 부스 태블릿을 /demo에 직접 북마크해두고 사용,
- * 본인 시연/내부 사용자는 /me 트랙을 사용.
- * 어떤 사람이 박람회 후에도 둘러보고 싶을 때를 위해 진입점 자체를 분리.
+ * 박람회 부스 iPad는 /demo에 직접 북마크되어 있으니 이 표지는:
+ *   - 일반 방문자가 URL 직접 접근 시 첫 인상
+ *   - 운영자가 "본 서비스 보여드릴게요" 할 때 두 트랙 모두 같은 표지에서 분기
  */
 export default function LandingPage() {
   return (
-    <StageContainer variant="light">
-      {/* Brand */}
-      <section className="mb-10 mt-4 animate-fade-up">
-        <p className="text-sm text-fg-light-soft mb-2">
-          하루 15분, 나에게 집중하는 시간
-        </p>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Being myself
-        </h1>
-        <p className="mt-3 text-sm text-fg-light-soft">
-          어떻게 시작하시겠어요?
-        </p>
-      </section>
-
-      {/* Track cards */}
-      <section className="flex-1 flex flex-col gap-4">
-        {/* Demo track */}
-        <Link
-          href="/demo"
-          className="block p-6 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all no-select animate-fade-up-delay-1"
+    <main className="min-h-screen w-full flex justify-center bg-surface-dark lg:bg-gradient-to-b lg:from-surface-dark lg:to-[#1a1235]">
+      <div className="w-full max-w-md flex flex-col gradient-hero text-fg-dark lg:rounded-3xl lg:my-8 lg:min-h-[820px] lg:shadow-2xl lg:shadow-black/40 relative">
+        {/* 보라 그라데이션 ambient — hero 톤 강화 */}
+        <div
+          aria-hidden
+          className="absolute -top-24 -right-24 w-72 h-72 rounded-full opacity-40 blur-3xl"
           style={{
-            backgroundImage:
-              "linear-gradient(135deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 50%, var(--grad-stop-3) 100%)",
+            background:
+              "radial-gradient(circle, var(--brand-500) 0%, transparent 70%)",
           }}
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="inline-block px-2 py-0.5 rounded-full bg-white/60 text-[10px] font-semibold text-fg-light tracking-wide mb-3">
-                DEMO
-              </div>
-              <div className="text-xl font-semibold text-fg-light mb-1">
-                박람회 게스트 데모
-              </div>
-              <div className="text-sm text-fg-light/80 leading-relaxed">
-                3 페르소나 중 하나를 골라
-                <br />5 분 안에 짧게 체험해보기
-              </div>
-            </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/legacy/image (12).png"
-              alt=""
-              aria-hidden
-              className="w-20 h-20 object-contain flex-shrink-0"
-            />
-          </div>
-        </Link>
+        />
+        <div
+          aria-hidden
+          className="absolute top-1/2 -left-32 w-80 h-80 rounded-full opacity-30 blur-3xl"
+          style={{
+            background:
+              "radial-gradient(circle, var(--grad-stop-3) 0%, transparent 70%)",
+          }}
+        />
 
-        {/* Me track — Phase B */}
-        <Link
-          href="/me"
-          className="block p-6 rounded-3xl bg-surface-dark text-fg-dark shadow-sm hover:shadow-md active:scale-[0.99] transition-all no-select animate-fade-up-delay-2"
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1">
-              <div className="inline-block px-2 py-0.5 rounded-full bg-brand-500/30 text-[10px] font-semibold text-brand-100 tracking-wide mb-3">
-                ORIGINAL
-              </div>
-              <div className="text-xl font-semibold mb-1">
-                내 데이터로 시작하기
-              </div>
-              <div className="text-sm text-fg-dark-soft leading-relaxed">
-                나의 셀프인터뷰를 기반으로
-                <br />AI 페이스메이커와 깊은 대화
-              </div>
-            </div>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/legacy/image (9).png"
-              alt=""
-              aria-hidden
-              className="w-20 h-20 object-contain flex-shrink-0 invert opacity-90"
-            />
+        {/* 본문 */}
+        <section className="relative flex-1 flex flex-col px-6 pt-16 pb-10">
+          {/* Hero 텍스트 */}
+          <div className="animate-fade-up">
+            <p className="text-xs font-medium text-fg-dark-soft tracking-wide mb-3">
+              하루 5분, 나를 정리하는 시간
+            </p>
+            <h1 className="text-5xl font-extrabold tracking-tight leading-tight">
+              Being
+              <br />
+              myself
+            </h1>
+            <p className="mt-6 text-base text-fg-dark-soft leading-relaxed">
+              두 가지 질문에 답하면
+              <br />
+              보고서가 쌓여요. 매일 5분으로
+              <br />
+              나의 소명을 발견해보세요.
+            </p>
           </div>
-        </Link>
-      </section>
 
-      <p className="text-center text-xs text-fg-light-soft mt-8">
-        Being Myself MVP · 모비니티 온톨로지
-      </p>
-    </StageContainer>
+          {/* 일러스트 자리 — 사용자가 직접 디자인 들고 오면 채움. 지금은 빈 spacing. */}
+          <div className="flex-1 min-h-[12rem] animate-fade-up-delay-1" />
+
+
+          {/* 진입 버튼 — 두 트랙 */}
+          <div className="flex flex-col gap-3 animate-fade-up-delay-2">
+            <Link
+              href="/demo"
+              className="block w-full px-6 py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 active:scale-[0.99] transition-all text-center"
+            >
+              <span className="block text-base font-semibold text-white">
+                체험해보기
+              </span>
+              <span className="block text-xs text-white/70 mt-0.5">
+                게스트 · 5분 데모
+              </span>
+            </Link>
+
+            <Link
+              href="/me"
+              className="block w-full px-6 py-4 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-[0.99] transition-all backdrop-blur-sm border border-white/15 text-center"
+            >
+              <span className="block text-base font-semibold text-fg-dark">
+                내 데이터로 시작
+              </span>
+              <span className="block text-xs text-fg-dark-soft mt-0.5">
+                로그인 · 매일 셀프인터뷰
+              </span>
+            </Link>
+          </div>
+
+          <p className="text-center text-xs text-fg-dark-soft/60 mt-8 animate-fade-up-delay-3">
+            Being Myself · 모비니티 온톨로지
+          </p>
+        </section>
+      </div>
+    </main>
   );
 }

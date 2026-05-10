@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/session";
+import { useConversation } from "@/lib/conversation";
 import { PERSONAS, PERSONA_ORDER } from "@/lib/personas";
 import type { PersonaId } from "@/lib/types";
 import { StageContainer } from "@/components/StageContainer";
@@ -20,9 +21,15 @@ import { StageContainer } from "@/components/StageContainer";
 export default function HomePage() {
   const router = useRouter();
   const { hydrated, setPersona, reset } = useSession();
+  // /demo namespace의 conversation storage도 함께 reset — 게스트 시연마다
+  // 이전 답변·질문 자취가 남지 않도록.
+  const { reset: resetConversation } = useConversation({ namespace: "demo" });
 
   useEffect(() => {
-    if (hydrated) reset();
+    if (hydrated) {
+      reset();
+      resetConversation();
+    }
     // hydrated가 true가 된 시점에 한 번만 reset
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hydrated]);
@@ -34,28 +41,17 @@ export default function HomePage() {
 
   return (
     <StageContainer variant="light">
-      {/* Hero */}
-      <section className="mb-10 mt-4 relative animate-fade-up">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <p className="text-sm text-fg-light-soft mb-2">
-              하루 15분, 나에게 집중하는 시간
-            </p>
-            <h1 className="text-3xl font-bold tracking-tight">Being myself</h1>
-            <p className="mt-4 text-base text-fg-light-soft leading-relaxed">
-              오늘 단 두 가지 질문으로
-              <br />
-              나의 소명을 발견해보세요.
-            </p>
-          </div>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/legacy/image (14).png"
-            alt=""
-            aria-hidden
-            className="w-24 h-24 object-contain flex-shrink-0 mt-2"
-          />
-        </div>
+      {/* Hero — 차분한 텍스트만, 페르소나 카드가 시각 무게 담당 */}
+      <section className="mb-10 mt-4 animate-fade-up">
+        <p className="text-sm text-fg-light-soft mb-2">
+          하루 5분, 나를 정리하는 시간
+        </p>
+        <h1 className="text-3xl font-bold tracking-tight">Being myself</h1>
+        <p className="mt-4 text-base text-fg-light-soft leading-relaxed">
+          오늘 단 두 가지 질문으로
+          <br />
+          나의 소명을 발견해보세요.
+        </p>
       </section>
 
       {/* Persona cards */}

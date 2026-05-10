@@ -1,19 +1,16 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import type {
-  SessionState,
-  PersonaId,
-  ChoiceKey,
-  StepIndex,
-  Direction,
-} from "./types";
+import type { PersonaId } from "./types";
 
-const STORAGE_KEY = "bm:session:v1";
+const STORAGE_KEY = "bm:session:v2";
+
+type SessionState = {
+  personaId: PersonaId | null;
+};
 
 const initial: SessionState = {
   personaId: null,
-  answers: { q1: null, q2: null },
 };
 
 function loadFromStorage(): SessionState {
@@ -22,13 +19,7 @@ function loadFromStorage(): SessionState {
     const raw = sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return initial;
     const parsed = JSON.parse(raw) as Partial<SessionState>;
-    return {
-      personaId: parsed.personaId ?? null,
-      answers: {
-        q1: parsed.answers?.q1 ?? null,
-        q2: parsed.answers?.q2 ?? null,
-      },
-    };
+    return { personaId: parsed.personaId ?? null };
   } catch {
     return initial;
   }
@@ -40,10 +31,10 @@ function saveToStorage(state: SessionState) {
 }
 
 /**
- * 박람회 게스트 세션 상태.
- * - sessionStorage에 저장 → 탭 닫히면 자동 소거
- * - 액션 핸들러에서 동기적으로 storage 쓰기 → page navigation race 차단
- * - hydrated가 false인 동안에는 server/SSR과 동기화 차이로 잘못된 redirect 방지
+ * 박람회 게스트 세션 — 선택한 페르소나만 저장.
+ *
+ * 답변·대화 상태는 `useConversation({ namespace: "demo", baselineId })`이 담당.
+ * 페르소나 선택 시 이전 conversation도 reset되어야 함 (게스트 시연마다 깨끗).
  */
 export function useSession() {
   const [state, setState] = useState<SessionState>(initial);
@@ -62,17 +53,6 @@ export function useSession() {
     });
   }, []);
 
-  const setAnswer = useCallback((step: StepIndex, choice: ChoiceKey) => {
-    setState((prev) => {
-      const nextAnswers = { ...prev.answers };
-      if (step === 0) nextAnswers.q1 = choice;
-      if (step === 1) nextAnswers.q2 = choice;
-      const next: SessionState = { ...prev, answers: nextAnswers };
-      saveToStorage(next);
-      return next;
-    });
-  }, []);
-
   const reset = useCallback(() => {
     if (typeof window !== "undefined") {
       sessionStorage.removeItem(STORAGE_KEY);
@@ -80,19 +60,5 @@ export function useSession() {
     setState(initial);
   }, []);
 
-  return { state, hydrated, setPersona, setAnswer, reset };
-}
-
-/**
- * 두 답변에서 보고서 방향 계산 (기획안 7.3).
- *   - 둘 다 1 → 방향1
- *   - 둘 다 2 → 방향2
- *   - 1+2 (혼합) → q1의 방향을 따름 (첫 인상 우선)
- */
-export function deriveDirection(
-  q1Direction: Direction,
-  q2Direction: Direction
-): Direction {
-  if (q1Direction === q2Direction) return q1Direction;
-  return q1Direction;
+  return { state, hydrated, setPersona, reset };
 }

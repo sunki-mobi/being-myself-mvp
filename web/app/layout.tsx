@@ -2,9 +2,9 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Being Myself — 하루 15분, 나에게 집중하는 시간",
+  title: "Being Myself — 하루 5분, 나를 정리하는 시간",
   description:
-    "AI 페이스메이커와의 대화로 나의 소명을 발견하는 시간. Being Myself MVP.",
+    "두 가지 질문에 답하며 나의 여정과 소명을 정리해가는 셀프인터뷰. Being Myself MVP.",
 };
 
 export const viewport: Viewport = {
@@ -21,8 +21,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ko" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-surface-light text-fg-light">
+    <html lang="ko" className="antialiased">
+      <body className="min-h-screen bg-surface-light text-fg-light">
         {children}
       </body>
     </html>

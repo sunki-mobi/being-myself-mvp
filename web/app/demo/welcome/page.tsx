@@ -43,16 +43,8 @@ export default function WelcomePage() {
           </h1>
         </div>
 
-        {/* Character illustration — 자기성찰 테마 */}
-        <div className="flex justify-center my-6 animate-fade-up-delay-1">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/legacy/image (9).png"
-            alt=""
-            aria-hidden
-            className="w-44 h-44 object-contain"
-          />
-        </div>
+        {/* Character illustration 자리 — 사용자 디자인 들어올 때까지 빈 spacing */}
+        <div className="h-32 animate-fade-up-delay-1" />
 
         <div
           className="p-6 rounded-3xl animate-fade-up-delay-2"
@@ -75,7 +67,7 @@ export default function WelcomePage() {
         </p>
       </div>
 
-      <PrimaryButton onClick={() => router.push("/demo/q/1")} className="mt-6 animate-fade-up-delay-3">
+      <PrimaryButton onClick={() => router.push("/demo/conversation")} className="mt-6 animate-fade-up-delay-3">
         시작하기
       </PrimaryButton>
     </StageContainer>
