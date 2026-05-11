@@ -162,7 +162,7 @@ export default function MeLandingPage() {
           </article>
 
           <p className="text-center text-xs text-fg-light-soft mt-auto pt-6">
-            Being Myself · 모비니티 온톨로지
+            © 2026 MOBINITY. All Rights Reserved.
           </p>
         </section>
       </div>

@@ -99,7 +99,7 @@ export default function LandingPage() {
           </div>
 
           <p className="text-center text-xs text-fg-dark-soft/60 mt-8 animate-fade-up-delay-3">
-            Being Myself · 모비니티 온톨로지
+            © 2026 MOBINITY. All Rights Reserved.
           </p>
         </section>
       </div>
