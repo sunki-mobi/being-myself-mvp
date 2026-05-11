@@ -54,9 +54,9 @@ export default function HomePage() {
                 하루 5분, 나를 정리하는 시간
               </p>
               <h1 className="text-3xl font-extrabold tracking-tight leading-tight">
-                Being
+                Being myself
                 <br />
-                myself
+
               </h1>
               <p className="mt-4 text-sm text-fg-dark-soft leading-relaxed">
                 오늘 단 두 가지 질문으로

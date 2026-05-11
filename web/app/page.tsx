@@ -41,13 +41,13 @@ export default function LandingPage() {
         <section className="relative flex-1 flex flex-col px-6 pt-16 pb-10">
           {/* Hero 텍스트 */}
           <div className="animate-fade-up">
-            <p className="text-xs font-medium text-fg-dark-soft tracking-wide mb-3">
+            <p className="mt-6 text-base text-fg-dark-soft leading-relaxed">
               하루 5분, 나를 정리하는 시간
             </p>
             <h1 className="text-5xl font-extrabold tracking-tight leading-tight">
-              Being
-              <br />
-              myself
+              Being myself
+              {/* <br /> */}
+
             </h1>
             <p className="mt-6 text-base text-fg-dark-soft leading-relaxed">
               두 가지 질문에 답하면
@@ -60,14 +60,14 @@ export default function LandingPage() {
 
           {/* Hero 일러스트 — 디자인 시스템 v0.1 (boras·민트 카드 stack). */}
           <div className="flex-1 min-h-[12rem] flex items-center justify-center animate-fade-up-delay-1">
-            <Image
+            {/* <Image
               src="/img/cover-hero.png"
               alt=""
               width={236}
               height={236}
               priority
               className="w-full max-w-[260px] h-auto"
-            />
+            /> */}
           </div>
 
 
