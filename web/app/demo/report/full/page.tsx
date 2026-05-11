@@ -132,10 +132,10 @@ function LayerCard({
         : "animate-fade-up-delay-3";
   return (
     <article
-      className={`p-5 rounded-3xl bg-surface-card border border-border-subtle ${delayClass}`}
+      className={`p-5 rounded-[12px] bg-surface-paper border border-border-line shadow-card ${delayClass}`}
     >
       <div className="flex items-baseline gap-2 mb-3">
-        <span className="inline-block px-2 py-0.5 rounded-full bg-brand-100 text-[10px] font-semibold text-brand-700 tracking-wide">
+        <span className="inline-block px-2 py-0.5 rounded-full bg-selected-bg text-[10px] font-semibold text-purple-deep tracking-wide">
           {card.layer}
         </span>
         <h2 className="text-base font-bold text-fg-light">
@@ -149,8 +149,8 @@ function LayerCard({
 
       <div className="space-y-3 mb-4">
         {card.quotes.map((q, i) => (
-          <div key={i} className="pl-3 border-l-2 border-brand-200">
-            <p className="text-[10px] font-semibold text-brand-600 mb-1 tracking-wide">
+          <div key={i} className="pl-3 border-l-2 border-purple">
+            <p className="text-[10px] font-semibold text-purple-deep mb-1 tracking-wide">
               Day {q.day}
             </p>
             <p className="text-sm text-fg-light/90 leading-relaxed italic">
@@ -160,11 +160,11 @@ function LayerCard({
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-1.5 pt-3 border-t border-border-subtle">
+      <div className="flex flex-wrap gap-1.5 pt-3 border-t border-border-line-soft">
         {card.keywords.map((k, i) => (
           <span
             key={i}
-            className="px-2 py-0.5 rounded-full bg-brand-50 text-[11px] text-brand-700"
+            className="px-2 py-0.5 rounded-full bg-selected-bg text-[11px] text-purple-deep"
           >
             #{k}
           </span>
