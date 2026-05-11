@@ -11,49 +11,119 @@
   src: url("/fonts/PretendardVariable.woff2") format("woff2-variations");
 }
 
+/* ============================================================
+   Design tokens — `Being Myself · Design System v0.1`
+   레퍼런스: design_handoff_being_myself/{README.md, design-system.html}
+   값은 디자인 시스템의 canonical hex 그대로. 기존 토큰명은 유지하되
+   값만 시스템에 맞춰 통일 — 컴포넌트 코드 변경 없이 톤만 한 번에 일치.
+   ============================================================ */
+
 :root {
-  /* Surface */
-  --surface-light: #ffffff;
-  --surface-dark: #0e0b1f;
-  --surface-card: #f6f5fb;
+  /* ---- Text / ink ---- */
+  --color-ink: #1e1a34;          /* headings, icons */
+  --color-body: #494c51;          /* body text */
+  --color-muted: #55575c;         /* helper, meta */
+
+  /* ---- Surfaces ---- */
+  --color-paper: #fffffd;         /* default surface */
+  --color-wash: #fbfaff;          /* faint lavender bg on selection screens */
+  --color-bg-cool: #f7f8fb;       /* cool neutral background */
+  --surface-dark: #0e0b1f;        /* legacy hero dark — kept */
   --surface-overlay: rgba(14, 11, 31, 0.55);
 
-  /* Text */
-  --text-on-light: #1a1a2e;
-  --text-on-light-soft: #5a5a72;
+  /* ---- Lines ---- */
+  --color-line: #dddddd;
+  --color-line-soft: #f4f2f4;
+
+  /* ---- Brand purple ---- */
+  --color-purple: #8948dd;        /* primary CTA, selected state */
+  --color-purple-deep: #6d2ec2;   /* hover / pressed */
+
+  /* ---- Accents ---- */
+  --color-lavender: #e5adff;      /* decorative · selected fill */
+  --color-mint: #c6edf5;          /* decorative cool accent */
+  --color-record: #f44a4a;        /* record indicator only */
+  --color-disabled: #757575;      /* disabled CTA background */
+  --color-selected-bg: #f6eefe;   /* choice card selected fill */
+
+  /* Extended supportive (from design-system.html) */
+  --color-green: #79f476;
+  --color-yellow: #ffe432;
+  --color-blue-soft: #cfe0f8;
+
+  /* ---- Legacy token aliases — 코드 호환성 유지 ----
+     기존 `bg-brand-500`, `text-fg-light` 등이 그대로 동작하도록
+     기존 토큰명을 새 디자인 시스템 hex로 매핑. */
+
+  /* Surface aliases */
+  --surface-light: var(--color-paper);
+  --surface-card: var(--color-wash);
+
+  /* Text aliases (light bg) */
+  --text-on-light: var(--color-ink);
+  --text-on-light-soft: var(--color-body);
+
+  /* Text on dark surfaces — legacy hero 유지 */
   --text-on-dark: #ffffff;
   --text-on-dark-soft: #c9c5e0;
 
-  /* Brand purple */
-  --brand-50: #f3efff;
-  --brand-100: #e6dcff;
-  --brand-200: #c7b8ff;
-  --brand-400: #9b80ff;
-  --brand-500: #7c5cff;   /* primary CTA */
-  --brand-600: #6342f0;
-  --brand-700: #4a2dc8;
+  /* Brand purple scale — 디자인 시스템 purple 기준으로 단계 보간 */
+  --brand-50: #fbfaff;            /* wash */
+  --brand-100: #f6eefe;            /* selected-bg */
+  --brand-200: #e5adff;            /* lavender */
+  --brand-400: #a66fe8;            /* interpolated */
+  --brand-500: #8948dd;            /* purple — primary */
+  --brand-600: #6d2ec2;            /* purple-deep */
+  --brand-700: #4f1d8a;            /* deeper, derived */
 
-  /* Gradient stops (legacy lavender → blue → pink) */
-  --grad-stop-1: #c7b8ff;
-  --grad-stop-2: #8ab4f8;
-  --grad-stop-3: #ffb8e0;
-
-  /* Borders */
-  --border-subtle: #e9e7f2;
+  /* Border aliases */
+  --border-subtle: var(--color-line-soft);
   --border-strong: #2a2640;
+
+  /* Gradient stops — pastel decorative (페르소나 카드 등) */
+  --grad-stop-1: #e5adff;          /* lavender */
+  --grad-stop-2: #cfe0f8;          /* blue-soft */
+  --grad-stop-3: #c6edf5;          /* mint */
+
+  /* ---- Shadow tiers (design system canonical) ---- */
+  --shadow-card: 0 4px 4px rgba(181, 181, 181, 0.25);   /* choice cards, inputs */
+  --shadow-sheet: 0 4px 6px rgba(0, 0, 0, 0.25);         /* top question header */
+  --shadow-button: 0 4px 4px rgba(0, 0, 0, 0.25);        /* CTA only */
+
+  /* ---- Radius scale ----
+     design system: 0 · 5 (cards & buttons) · 12 (sheets) · 999 (pills/circles).
+     기존 큰 radius 변수는 legacy 화면 유지용으로 살려둠 — 박람회 후 컴포넌트
+     단위로 5/12/999로 마이그레이션. */
+  --radius-design-card: 5px;
+  --radius-design-sheet: 12px;
+  --radius-pill: 999px;
+  /* legacy */
+  --radius-card: 1.5rem;          /* 24px — 기존 cover/hero 카드 */
+  --radius-card-lg: 2rem;         /* 32px */
 }
 
 @theme inline {
+  /* ---- Color utility mapping (Tailwind 4) ----
+     아래 변수명들이 `bg-{name}`, `text-{name}`, `border-{name}` 등의
+     utility로 자동 생성됨. */
+
+  /* Surface */
   --color-surface-light: var(--surface-light);
   --color-surface-dark: var(--surface-dark);
   --color-surface-card: var(--surface-card);
   --color-surface-overlay: var(--surface-overlay);
+  --color-surface-paper: var(--color-paper);
+  --color-surface-wash: var(--color-wash);
+  --color-surface-cool: var(--color-bg-cool);
 
+  /* Foreground */
   --color-fg-light: var(--text-on-light);
   --color-fg-light-soft: var(--text-on-light-soft);
+  --color-fg-light-muted: var(--color-muted);
   --color-fg-dark: var(--text-on-dark);
   --color-fg-dark-soft: var(--text-on-dark-soft);
 
+  /* Brand purple scale (legacy names) */
   --color-brand-50: var(--brand-50);
   --color-brand-100: var(--brand-100);
   --color-brand-200: var(--brand-200);
@@ -62,18 +132,73 @@
   --color-brand-600: var(--brand-600);
   --color-brand-700: var(--brand-700);
 
+  /* Brand purple — design system canonical names (병행) */
+  --color-purple: var(--color-purple);
+  --color-purple-deep: var(--color-purple-deep);
+
+  /* Accents */
+  --color-lavender: var(--color-lavender);
+  --color-mint: var(--color-mint);
+  --color-record: var(--color-record);
+  --color-disabled: var(--color-disabled);
+  --color-selected-bg: var(--color-selected-bg);
+
+  /* Border */
   --color-border-subtle: var(--border-subtle);
+  --color-border-line: var(--color-line);
+  --color-border-line-soft: var(--color-line-soft);
   --color-border-strong: var(--border-strong);
 
-  --font-sans: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont,
-    "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", system-ui, sans-serif;
+  /* ---- Font family ----
+     Heading: Pretendard. Body: Noto Sans KR (fallback Pretendard).
+     Noto Sans KR는 박람회 후 self-host 검토 — 지금은 Pretendard로 일관. */
+  --font-sans: "Pretendard Variable", Pretendard, "Apple SD Gothic Neo",
+    "Noto Sans KR", -apple-system, BlinkMacSystemFont, "Malgun Gothic",
+    system-ui, sans-serif;
+  --font-display: var(--font-sans);
+  --font-body: var(--font-sans);
 
-  --radius-card: 1.5rem;        /* 24px */
-  --radius-card-lg: 2rem;       /* 32px */
-  --radius-pill: 999px;
+  /* ---- Typography scale (design system v0.1) ----
+     utility: `text-display`, `text-title`, ... `text-caption` */
+  --text-display: 3rem;          /* 48px */
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.02em;
+  --text-title: 2rem;            /* 32px */
+  --text-title--line-height: 1.10;
+  --text-title--letter-spacing: -0.015em;
+  --text-heading: 1.5rem;        /* 24px */
+  --text-heading--line-height: 1.15;
+  --text-subhead: 1.125rem;      /* 18px */
+  --text-subhead--line-height: 1.20;
+  --text-question: 1.3125rem;    /* 21px */
+  --text-question--line-height: 1.25;
+  --text-body: 1rem;             /* 16px */
+  --text-body--line-height: 1.55;
+  --text-meta: 0.875rem;         /* 14px */
+  --text-meta--line-height: 1.50;
+  --text-caption: 0.625rem;      /* 10px */
+  --text-caption--line-height: 1.40;
+  --text-caption--letter-spacing: 0.04em;
+
+  /* ---- Radius ---- */
+  --radius-card: var(--radius-card);
+  --radius-card-lg: var(--radius-card-lg);
+  --radius-pill: var(--radius-pill);
+  /* Design-system canonical (component migration 진행 시 사용) */
+  --radius-design-card: var(--radius-design-card);
+  --radius-design-sheet: var(--radius-design-sheet);
+
+  /* ---- Shadow utilities ---- */
+  --shadow-card: var(--shadow-card);
+  --shadow-sheet: var(--shadow-sheet);
+  --shadow-button: var(--shadow-button);
 }
 
-/* Pastel gradient utility — used on featured cards */
+/* ============================================================
+   Utilities
+   ============================================================ */
+
+/* Pastel gradient utility — 페르소나 카드 등에 사용 */
 @utility gradient-card {
   background: linear-gradient(
     135deg,
@@ -83,16 +208,13 @@
   );
 }
 
-/* Hero gradient — used behind brand */
+/* Hero gradient — 다크 hero 톤 */
 @utility gradient-hero {
-  background: linear-gradient(
-    180deg,
-    var(--surface-dark) 0%,
-    #1a1235 100%
-  );
+  background: linear-gradient(180deg, var(--surface-dark) 0%, #1a1235 100%);
 }
 
-html, body {
+html,
+body {
   /* min-height만 100%로 — height: 100%면 콘텐츠가 길어져도 body가 viewport에
      묶여 자식 main이 body 밖으로 흘러나가고 카드 배경이 끊어짐. */
   min-height: 100%;
@@ -113,7 +235,8 @@ body {
 }
 
 /* Tap highlights off for kiosk-like feel */
-button, [role="button"] {
+button,
+[role="button"] {
   -webkit-tap-highlight-color: transparent;
 }
 
