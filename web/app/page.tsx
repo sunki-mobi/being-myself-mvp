@@ -45,9 +45,9 @@ export default function LandingPage() {
               하루 5분, 나를 정리하는 시간
             </p>
             <h1 className="text-5xl font-extrabold tracking-tight leading-tight">
-              Being myself
-              {/* <br /> */}
-
+              Being
+              <br />
+              myself
             </h1>
             <p className="mt-6 text-base text-fg-dark-soft leading-relaxed">
               두 가지 질문에 답하면
