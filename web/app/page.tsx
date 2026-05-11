@@ -75,17 +75,17 @@ export default function LandingPage() {
               </span>
             </Link>
 
-            <Link
-              href="/me"
-              className="block w-full px-6 py-4 rounded-2xl bg-white/10 hover:bg-white/15 active:scale-[0.99] transition-all backdrop-blur-sm border border-white/15 text-center"
+            <div
+              aria-disabled="true"
+              className="block w-full px-6 py-4 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 text-center cursor-not-allowed opacity-60"
             >
-              <span className="block text-base font-semibold text-fg-dark">
+              <span className="block text-base font-semibold text-fg-dark/70">
                 내 데이터로 시작
               </span>
               <span className="block text-xs text-fg-dark-soft mt-0.5">
-                로그인 · 매일 셀프인터뷰
+                준비 중 · 박람회 후 공개
               </span>
-            </Link>
+            </div>
           </div>
 
           <p className="text-center text-xs text-fg-dark-soft/60 mt-8 animate-fade-up-delay-3">
