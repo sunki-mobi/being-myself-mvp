@@ -47,7 +47,7 @@ export default function WelcomePage() {
         <div className="h-32 animate-fade-up-delay-1" />
 
         <div
-          className="p-6 rounded-3xl animate-fade-up-delay-2"
+          className="p-6 rounded-[12px] shadow-card animate-fade-up-delay-2"
           style={{
             backgroundImage:
               "linear-gradient(135deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 50%, var(--grad-stop-3) 100%)",

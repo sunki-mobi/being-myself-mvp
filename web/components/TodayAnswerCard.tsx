@@ -23,7 +23,7 @@ export function TodayAnswerCard({
 }) {
   return (
     <article
-      className="p-5 rounded-3xl"
+      className="p-5 rounded-[12px] shadow-card"
       style={{
         backgroundImage:
           "linear-gradient(135deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 50%, var(--grad-stop-3) 100%)",
@@ -35,7 +35,7 @@ export function TodayAnswerCard({
       </h3>
 
       {card ? (
-        <div className="bg-white/80 rounded-2xl p-4 flex flex-col gap-3">
+        <div className="bg-white/80 rounded-[12px] p-4 flex flex-col gap-3">
           {card.subtopics.map((st, i) => (
             <div key={i}>
               <h4 className="text-sm font-bold text-fg-light mb-1.5">
@@ -72,7 +72,7 @@ export function TodayAnswerCard({
           </div>
         </div>
       ) : loading ? (
-        <div className="bg-white/80 rounded-2xl p-4">
+        <div className="bg-white/80 rounded-[12px] p-4">
           <div className="flex items-center gap-2 mb-3">
             <span className="flex gap-1">
               <span className="w-1.5 h-1.5 bg-brand-500/60 rounded-full animate-bounce" />
@@ -86,7 +86,7 @@ export function TodayAnswerCard({
           </p>
         </div>
       ) : (
-        <div className="bg-white/80 rounded-2xl p-4">
+        <div className="bg-white/80 rounded-[12px] p-4">
           <p className="text-sm text-fg-light leading-relaxed whitespace-pre-wrap">
             {pair.answer}
           </p>

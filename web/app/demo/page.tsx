@@ -71,7 +71,7 @@ export default function HomePage() {
             <button
               key={id}
               onClick={() => selectPersona(id)}
-              className={`text-left p-5 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all no-select ${delayClass}`}
+              className={`text-left p-5 rounded-[12px] shadow-card hover:shadow-button active:scale-[0.99] transition-all no-select ${delayClass}`}
               style={{
                 backgroundImage: `linear-gradient(${135 + idx * 30}deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 50%, var(--grad-stop-3) 100%)`,
               }}

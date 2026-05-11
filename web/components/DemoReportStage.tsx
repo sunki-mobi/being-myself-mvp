@@ -128,7 +128,7 @@ export function DemoReportStage({
               ))}
             </div>
           ) : (
-            <article className="p-5 rounded-3xl bg-surface-card border border-border-subtle animate-fade-up-delay-1 text-center">
+            <article className="p-5 rounded-[12px] bg-surface-paper border border-border-line shadow-card animate-fade-up-delay-1 text-center">
               <p className="text-base font-semibold text-fg-light leading-relaxed mb-2">
                 오늘 두 호흡으로 시작해볼까요?
               </p>
@@ -146,7 +146,7 @@ export function DemoReportStage({
           {/* 장기 누적 미리보기 — 페르소나별 풀 baseline 보고서로 진입 */}
           {hasToday ? (
             <article
-              className="mt-2 p-5 rounded-3xl bg-surface-dark text-fg-dark cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all animate-fade-up-delay-2"
+              className="mt-2 p-5 rounded-[12px] bg-surface-dark text-fg-dark shadow-button cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all animate-fade-up-delay-2"
               onClick={() => router.push(fullReportPath)}
               role="button"
               tabIndex={0}
