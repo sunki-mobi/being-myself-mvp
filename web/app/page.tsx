@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 /**
@@ -57,8 +58,17 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* 일러스트 자리 — 사용자가 직접 디자인 들고 오면 채움. 지금은 빈 spacing. */}
-          <div className="flex-1 min-h-[12rem] animate-fade-up-delay-1" />
+          {/* Hero 일러스트 — 디자인 시스템 v0.1 (boras·민트 카드 stack). */}
+          <div className="flex-1 min-h-[12rem] flex items-center justify-center animate-fade-up-delay-1">
+            <Image
+              src="/img/cover-hero.png"
+              alt=""
+              width={236}
+              height={236}
+              priority
+              className="w-full max-w-[260px] h-auto"
+            />
+          </div>
 
 
           {/* 진입 버튼 — 두 트랙 */}
