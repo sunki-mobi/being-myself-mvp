@@ -143,7 +143,7 @@ export function ConversationStage({
           </h1>
           <p className="mt-2 text-xs text-fg-light/70">
             {answeredCount === 0
-              ? "잠깐 나를 정리하는 시간"
+              ? "잠깐 나에게 집중하는 시간"
               : `Q${answeredCount + (mode === "complete" ? 0 : 1)} · ${answeredCount}개 답변 누적`}
           </p>
         </header>

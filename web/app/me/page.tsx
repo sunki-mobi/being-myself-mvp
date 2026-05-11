@@ -68,7 +68,7 @@ export default function MeLandingPage() {
                 {state.userName}님, 안녕하세요
               </p>
               <h1 className="text-3xl font-bold leading-tight">
-                나를 정리하는 시간,
+                나에게 집중하는 시간,
                 <br />
                 <span className="font-extrabold">Being myself</span>
               </h1>
@@ -162,7 +162,7 @@ export default function MeLandingPage() {
           </article>
 
           <p className="text-center text-xs text-fg-light-soft mt-auto pt-6">
-            © 2026 MOBINITY. All Rights Reserved.
+            Copyright © 2026 MOBINITY. All Rights Reserved.
           </p>
         </section>
       </div>

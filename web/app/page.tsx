@@ -42,7 +42,7 @@ export default function LandingPage() {
           {/* Hero 텍스트 */}
           <div className="animate-fade-up">
             <p className="text-xs font-medium text-fg-dark-soft tracking-wide mb-3">
-              하루 5분, 나를 정리하는 시간
+              하루 5분, 나에게 집중하는 시간
             </p>
             <h1 className="text-5xl font-extrabold tracking-tight leading-tight">
               Being
@@ -99,7 +99,7 @@ export default function LandingPage() {
           </div>
 
           <p className="text-center text-xs text-fg-dark-soft/60 mt-8 animate-fade-up-delay-3">
-            © 2026 MOBINITY. All Rights Reserved.
+            Copyright © 2026 MOBINITY. All Rights Reserved.
           </p>
         </section>
       </div>
