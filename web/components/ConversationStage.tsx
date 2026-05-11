@@ -181,7 +181,7 @@ export function ConversationStage({
           ) : null}
 
           {error ? (
-            <div className="mt-4 p-4 rounded-2xl bg-brand-50 border border-brand-100">
+            <div className="mt-4 p-4 rounded-[12px] bg-brand-50 border border-brand-100">
               <p className="text-xs font-semibold text-brand-600 mb-1">
                 잠시 멈췄어요
               </p>
@@ -274,7 +274,7 @@ function CardQuestion({
       <div className="h-12" />
 
       {reactionText ? (
-        <div className="px-4 py-3 rounded-2xl bg-brand-50 border border-brand-100 animate-fade-up-delay-1">
+        <div className="px-4 py-3 rounded-[12px] bg-brand-50 border border-brand-100 animate-fade-up-delay-1">
           <p className="text-xs leading-relaxed text-fg-light-soft">
             <span className="font-semibold text-brand-600">B </span>
             {reactionText}
@@ -299,7 +299,7 @@ function CardQuestion({
                 type="button"
                 onClick={() => setDraft(s)}
                 disabled={disabled}
-                className="text-left px-4 py-2.5 rounded-2xl border border-border-subtle bg-surface-card hover:bg-brand-50 hover:border-brand-200 active:scale-[0.99] transition-all disabled:opacity-50"
+                className="text-left px-4 py-2.5 rounded-[12px] border border-border-subtle bg-surface-card hover:bg-brand-50 hover:border-brand-200 active:scale-[0.99] transition-all disabled:opacity-50"
               >
                 <p className="text-sm text-fg-light leading-relaxed">{s}</p>
               </button>
@@ -324,7 +324,7 @@ function CardQuestion({
           }
           disabled={disabled || inputBusy}
           rows={4}
-          className="w-full px-4 py-3 rounded-2xl border border-border-subtle bg-surface-card focus:bg-white focus:border-brand-500 outline-none text-base resize-none transition-colors disabled:opacity-50"
+          className="w-full px-4 py-3 rounded-[12px] border border-border-subtle bg-surface-card focus:bg-white focus:border-brand-500 outline-none text-base resize-none transition-colors disabled:opacity-50"
           onKeyDown={(e) => {
             if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
               e.preventDefault();
@@ -384,7 +384,7 @@ function RecorderControl({
 
   if (transcribing) {
     return (
-      <div className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-brand-50 border border-brand-100">
+      <div className="flex items-center justify-center gap-2 px-4 py-3 rounded-[12px] bg-brand-50 border border-brand-100">
         <span className="flex gap-1">
           <span className="w-1.5 h-1.5 bg-brand-500/70 rounded-full animate-bounce" />
           <span className="w-1.5 h-1.5 bg-brand-500/70 rounded-full animate-bounce [animation-delay:0.15s]" />
@@ -400,7 +400,7 @@ function RecorderControl({
       <button
         type="button"
         onClick={onStop}
-        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-2xl bg-red-50 border-2 border-red-300 hover:bg-red-100 transition-colors"
+        className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-[12px] bg-red-50 border-2 border-red-300 hover:bg-red-100 transition-colors"
       >
         <span className="relative flex h-3 w-3">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -416,7 +416,7 @@ function RecorderControl({
 
   if (recState === "requesting") {
     return (
-      <div className="flex items-center justify-center px-4 py-3 rounded-2xl bg-surface-card border border-border-subtle">
+      <div className="flex items-center justify-center px-4 py-3 rounded-[12px] bg-surface-card border border-border-subtle">
         <p className="text-xs text-fg-light-soft">마이크 권한을 요청 중…</p>
       </div>
     );
@@ -431,7 +431,7 @@ function RecorderControl({
           void onStart();
         }}
         disabled={disabled}
-        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-2xl border border-border-subtle bg-white hover:bg-brand-50 active:bg-brand-100 transition-colors disabled:opacity-50"
+        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-[12px] border border-border-subtle bg-white hover:bg-brand-50 active:bg-brand-100 transition-colors disabled:opacity-50"
       >
         <svg
           viewBox="0 0 24 24"
@@ -476,7 +476,7 @@ function CardThinking({
   return (
     <div className="flex-1 flex flex-col gap-6 items-center justify-center animate-fade-up">
       {userAnswerEcho ? (
-        <div className="w-full max-w-xs px-4 py-3 rounded-2xl bg-fg-light text-white">
+        <div className="w-full max-w-xs px-4 py-3 rounded-[12px] bg-fg-light text-white">
           <p className="text-sm leading-relaxed whitespace-pre-wrap">
             {userAnswerEcho}
           </p>
