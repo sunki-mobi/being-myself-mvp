@@ -84,11 +84,31 @@
 
 ## Phase 3 — Baseline 합성 (~1.5주)
 
-- 첫 진입 시 진입점 분기: "처음 시작하기" / "이미 인터뷰 자료가 있어요"
-- **음성 인터뷰 경로**: 위 질문 시퀀스 흐름 + MediaRecorder + Gemini multimodal STT
-- **Import 경로**: 텍스트 입력 → LLM 파싱 → 사용자 검토·수정 화면
-- 스키마: `baseline_report` (BaselineReport JSON 형태로 저장 + version + generated_at)
-- `/me/report`·`/me/report/full`에 본인 baseline 표시 (기존 SKPAN 하드코딩 제거 — `web/lib/me/baseline-report.ts`)
+**상세 결정 (locked):**
+- **Q3-2**: Q3-1과 동일 문구 ("그럼, 나는 이렇게 살고 싶다 하는 모습이 있나요?") — 의도 확인됨
+- **진입 UX**: `/me` 첫 진입 시 baseline 없음 → **card-select 화면** (셀프인터뷰 카드 / Import 카드)
+- **STT**: **Web Speech API + edit-before-submit** — 실시간 transcription, 사용자가 textarea에서 수정 후 제출. Firefox·미지원 환경은 타이핑 fallback
+- **이탈/이어서**: question 단위로 즉시 DB 저장. 진행 중 닫고 다시 들어와도 마지막 답변 끝난 다음 question부터 이어서
+
+**서브 페이즈:**
+- **3a — 기반:** migration 003(`baseline_report`), `/me` 진입 분기, `/me/baseline/{interview,import}` placeholder
+- **3b — 셀프인터뷰 흐름:** 3 Q-block × (객관식 → 음성 + textarea). Web Speech hook. 답변마다 DB 저장 → resume 가능
+- **3c — Import 흐름:** 풀텍스트 paste → LLM 파싱 → 검토·수정 → 저장
+- **3d — 합성·wire-up:** 셀프인터뷰 답변 → LLM이 BaselineReport JSON 합성 → DB 저장. `/me/report`·`/me/report/full`에서 본인 baseline 읽음. SKPAN 하드코딩 제거.
+
+**스키마 (예정):**
+```sql
+baseline_report (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid unique not null references auth.users(id) on delete cascade,
+  source text check (source in ('interview', 'import')),
+  report jsonb not null,  -- BaselineReport 전체 JSON
+  version integer not null default 1,
+  generated_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+)
+-- + 인터뷰 진행 상태 추적용 별도 테이블 또는 user_settings 확장
+```
 
 ## Phase 4 — Long-Term 보고서 합성 (~1.5주)
 
