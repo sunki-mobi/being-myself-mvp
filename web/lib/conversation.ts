@@ -23,6 +23,11 @@ export type ConversationMessage = {
 export type ConversationState = {
   /** 가짜 로그인된 사용자 이름 (Phase B에서는 Google 프로필) */
   userName: string | null;
+  /**
+   * 한 세션의 conversation UUID. persistTurns가 true일 때, 첫 startConversation
+   * 시 client-generated로 할당. reset 시 클리어.
+   */
+  conversationId: string | null;
   messages: ConversationMessage[];
   /** AI가 마무리 신호를 보냈는지 */
   isComplete: boolean;
@@ -55,10 +60,16 @@ export type ConversationOptions = {
    * 없으면 바로 Q1 카드.
    */
   hardcodedWelcome?: string;
+  /**
+   * 매 turn 완료 시 fire-and-forget으로 /api/me/qa-pairs에 누적 저장.
+   * Phase 2 — /me 트랙(로그인 사용자)에서만 true. /demo는 항상 false.
+   */
+  persistTurns?: boolean;
 };
 
 const initial: ConversationState = {
   userName: null,
+  conversationId: null,
   messages: [],
   isComplete: false,
 };
@@ -71,12 +82,36 @@ function loadFromStorage(storageKey: string): ConversationState {
     const parsed = JSON.parse(raw) as Partial<ConversationState>;
     return {
       userName: parsed.userName ?? null,
+      conversationId: parsed.conversationId ?? null,
       messages: Array.isArray(parsed.messages) ? parsed.messages : [],
       isComplete: Boolean(parsed.isComplete),
     };
   } catch {
     return initial;
   }
+}
+
+/** /api/me/qa-pairs로 fire-and-forget POST. 실패해도 UI는 그대로 흐름. */
+function persistQaPair(body: {
+  conversationId: string;
+  questionIndex: number;
+  questionText: string;
+  reactionText: string | null;
+  answerText: string;
+  isLast: boolean;
+}) {
+  void fetch("/api/me/qa-pairs", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  })
+    .then(async (res) => {
+      if (!res.ok && res.status !== 401) {
+        const detail = await res.json().catch(() => ({}));
+        console.error("[qa-pair persist]", res.status, detail);
+      }
+    })
+    .catch((err) => console.error("[qa-pair persist]", err));
 }
 
 function saveToStorage(storageKey: string, state: ConversationState) {
@@ -120,6 +155,7 @@ export function useConversation(options: ConversationOptions = {}) {
   const mode = options.mode;
   const hardcodedQuestions = options.hardcodedQuestions;
   const hardcodedWelcome = options.hardcodedWelcome;
+  const persistTurns = options.persistTurns ?? false;
 
   const storageKey = useMemo(() => `${STORAGE_PREFIX}:${namespace}:v3`, [namespace]);
 
@@ -151,6 +187,14 @@ export function useConversation(options: ConversationOptions = {}) {
 
     setError(null);
 
+    // persistTurns 모드면 conversationId 발급 (없을 때만)
+    const ensuredConversationId =
+      persistTurns && !state.conversationId
+        ? (typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID()
+            : null)
+        : state.conversationId;
+
     // Hardcoded 모드 — LLM 호출 없이 즉시 첫 질문 추가
     if (hardcodedQuestions) {
       setState((prev) => {
@@ -165,6 +209,7 @@ export function useConversation(options: ConversationOptions = {}) {
         });
         const next: ConversationState = {
           ...prev,
+          conversationId: ensuredConversationId,
           messages: [...prev.messages, ...newMessages],
           isComplete: false,
         };
@@ -189,6 +234,7 @@ export function useConversation(options: ConversationOptions = {}) {
         });
         const next: ConversationState = {
           ...prev,
+          conversationId: ensuredConversationId,
           messages: [...prev.messages, ...newMessages],
           isComplete: turn.isComplete,
         };
@@ -202,9 +248,11 @@ export function useConversation(options: ConversationOptions = {}) {
     }
   }, [
     state.userName,
+    state.conversationId,
     state.messages.length,
     baselineId,
     mode,
+    persistTurns,
     storageKey,
     hardcodedQuestions,
     hardcodedWelcome,
@@ -221,14 +269,30 @@ export function useConversation(options: ConversationOptions = {}) {
       const answeredCount = state.messages.filter(
         (m) => m.role === "user-answer",
       ).length;
-      const questionIndex =
-        state.messages.filter((m) => m.role === "ai-question").length - 1;
+      const aiQuestions = state.messages.filter(
+        (m) => m.role === "ai-question",
+      );
+      const questionIndex = aiQuestions.length - 1;
+      const questionText = aiQuestions[questionIndex]?.text ?? "";
       const optimistic: ConversationMessage[] = [
         ...state.messages,
         { role: "user-answer", text: trimmed, questionIndex },
       ];
+
+      // persistTurns 모드인데 conversationId가 아직 없으면 즉석 발급 (defensive)
+      const ensuredConversationId =
+        persistTurns && !state.conversationId
+          ? typeof crypto !== "undefined" && crypto.randomUUID
+            ? crypto.randomUUID()
+            : null
+          : state.conversationId;
+
       setState((prev) => {
-        const next: ConversationState = { ...prev, messages: optimistic };
+        const next: ConversationState = {
+          ...prev,
+          conversationId: ensuredConversationId,
+          messages: optimistic,
+        };
         saveToStorage(storageKey, next);
         return next;
       });
@@ -254,6 +318,17 @@ export function useConversation(options: ConversationOptions = {}) {
           saveToStorage(storageKey, next);
           return next;
         });
+
+        if (persistTurns && ensuredConversationId && questionText) {
+          persistQaPair({
+            conversationId: ensuredConversationId,
+            questionIndex,
+            questionText,
+            reactionText: null,
+            answerText: trimmed,
+            isLast: !justAnsweredFirst,
+          });
+        }
         return;
       }
 
@@ -280,6 +355,17 @@ export function useConversation(options: ConversationOptions = {}) {
           saveToStorage(storageKey, next);
           return next;
         });
+
+        if (persistTurns && ensuredConversationId && questionText) {
+          persistQaPair({
+            conversationId: ensuredConversationId,
+            questionIndex,
+            questionText,
+            reactionText: turn.reaction.trim() ? turn.reaction.trim() : null,
+            answerText: trimmed,
+            isLast: turn.isComplete,
+          });
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "답변 전송에 실패했어요.");
       } finally {
@@ -288,9 +374,11 @@ export function useConversation(options: ConversationOptions = {}) {
     },
     [
       state.userName,
+      state.conversationId,
       state.messages,
       baselineId,
       mode,
+      persistTurns,
       storageKey,
       hardcodedQuestions,
     ],
@@ -300,7 +388,12 @@ export function useConversation(options: ConversationOptions = {}) {
     if (typeof window !== "undefined") {
       sessionStorage.removeItem(storageKey);
     }
-    setState(initial);
+    // userName은 유지하고 conversationId·messages·isComplete만 초기화 —
+    // 같은 사용자가 새 세션 시작할 때 다시 로그인하지 않아도 되도록.
+    setState((prev) => ({
+      ...initial,
+      userName: prev.userName,
+    }));
     setError(null);
   }, [storageKey]);
 

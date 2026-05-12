@@ -11,7 +11,9 @@ import { ConversationStage } from "@/components/ConversationStage";
  */
 export default function MeConversationPage() {
   const router = useRouter();
-  const { state, hydrated } = useConversation({ namespace: "me" });
+  // /me는 로그인 사용자 트랙 — proxy가 이미 인증 가드. persistTurns로 매 turn DB 누적.
+  const conversationOptions = { namespace: "me" as const, persistTurns: true };
+  const { state, hydrated } = useConversation(conversationOptions);
 
   // 사용자 이름이 없으면 /me로 보냄
   useEffect(() => {
@@ -26,7 +28,7 @@ export default function MeConversationPage() {
 
   return (
     <ConversationStage
-      conversationOptions={{ namespace: "me" }}
+      conversationOptions={conversationOptions}
       userNameDisplay={state.userName}
       onBack={() => router.push("/me")}
       completePath="/me/report"
