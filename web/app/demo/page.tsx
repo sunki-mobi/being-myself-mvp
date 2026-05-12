@@ -51,7 +51,7 @@ export default function HomePage() {
           <div className="flex items-start justify-between gap-3">
             <div className="flex-1 min-w-0">
               <p className="text-xs font-medium text-fg-dark-soft tracking-wide mb-3">
-                하루 5분, 나를 정리하는 시간
+                하루 5분, 나에게 집중하는 시간
               </p>
               <h1 className="text-3xl font-extrabold tracking-tight leading-tight">
                 Being myself
