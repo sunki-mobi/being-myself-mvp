@@ -42,7 +42,7 @@ export default function LandingPage() {
           {/* Hero 텍스트 */}
           <div className="animate-fade-up">
             <p className="mt-6 text-base text-fg-dark-soft leading-relaxed">
-              하루 5분, 나를 정리하는 시간
+              하루 5분, 나에게 집중하는 시간
             </p>
             <h1 className="text-5xl font-extrabold tracking-tight leading-tight">
               Being
@@ -74,7 +74,7 @@ export default function LandingPage() {
           {/* 진입 버튼 — 두 트랙 */}
           <div className="flex flex-col gap-3 animate-fade-up-delay-2">
             <Link
-              href="/demo"
+              href="/demo/prepare/1"
               className="block w-full px-6 py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 active:scale-[0.99] transition-all text-center"
             >
               <span className="block text-base font-semibold text-white">
