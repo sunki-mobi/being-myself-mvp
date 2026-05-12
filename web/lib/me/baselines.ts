@@ -32,16 +32,51 @@ function blankPersonaBaseline(args: {
     intro: args.intro,
     parts: [
       {
+        partTitle: "가치 있는 것",
+        partTitleEn: "I Feel Valuable About It",
+        preface:
+          "내게 '가치 있는 것'은, 나에게 소중한 것, 내가 추구하는 모습 그리고 나의 가치관 같은 것을 말합니다.",
+        examples: [
+          `[${args.ctx} 가치 있는 것 예시1 — Day 3]`,
+          `[${args.ctx} 가치 있는 것 예시2 — Day 3]`,
+          `[${args.ctx} 가치 있는 것 예시3 — Day 3]`,
+        ],
+        closing: `[${args.ctx} 가치 있는 것 격려문 — Day 3]`,
+        questions: [
+          {
+            question: "나는 이렇게 살고 싶다 하는 모습이 있나요?",
+            meta: "내 인생에 있어 중요한 가치를 알고 있나요? — 알고 있어요",
+            items: [
+              {
+                title: `[${args.ctx} 가치 있는 것 항목 1 제목 — Day 3]`,
+                description: [`[${args.ctx} 가치 있는 것 항목 1 설명 — Day 3]`],
+              },
+              {
+                title: `[${args.ctx} 가치 있는 것 항목 2 제목 — Day 3]`,
+                description: [`[${args.ctx} 가치 있는 것 항목 2 설명 — Day 3]`],
+              },
+            ],
+            insight: {
+              text: `[${args.ctx} 가치 있는 것 인사이트 — Day 3]`,
+              keywords: [`[${args.ctx} 가치 있는 것 키워드들 — Day 3]`],
+            },
+            coachInterview: [
+              `[${args.ctx} 가치 있는 것 코치인터뷰 발췌 — Day 3]`,
+            ],
+          },
+        ],
+      },
+      {
         partTitle: "좋아하는 것",
         partTitleEn: "I Love It",
         preface:
           "좋아하는 것은, 인생에서 가장 큰 기쁨을 주고 성취감을 느끼게 하는 일이나 경험을 말합니다.",
         examples: [
-          `[${args.ctx} Part1 예시1 — Day 3]`,
-          `[${args.ctx} Part1 예시2 — Day 3]`,
-          `[${args.ctx} Part1 예시3 — Day 3]`,
+          `[${args.ctx} 좋아하는 것 예시1 — Day 3]`,
+          `[${args.ctx} 좋아하는 것 예시2 — Day 3]`,
+          `[${args.ctx} 좋아하는 것 예시3 — Day 3]`,
         ],
-        closing: `[${args.ctx} Part1 격려문 — Day 3]`,
+        closing: `[${args.ctx} 좋아하는 것 격려문 — Day 3]`,
         questions: [
           {
             question: "내가 정말 좋아하는 것은 무엇인가요?",
@@ -72,11 +107,11 @@ function blankPersonaBaseline(args: {
         preface:
           "우리가 집중해 볼 '잘하는 것'은, 내가 배우고 노력해서 얻은 스킬이 아니라 남들보다 자연스럽게 잘하는 나의 강점을 말합니다.",
         examples: [
-          `[${args.ctx} Part2 예시1 — Day 3]`,
-          `[${args.ctx} Part2 예시2 — Day 3]`,
-          `[${args.ctx} Part2 예시3 — Day 3]`,
+          `[${args.ctx} 잘하는 것 예시1 — Day 3]`,
+          `[${args.ctx} 잘하는 것 예시2 — Day 3]`,
+          `[${args.ctx} 잘하는 것 예시3 — Day 3]`,
         ],
-        closing: `[${args.ctx} Part2 격려문 — Day 3]`,
+        closing: `[${args.ctx} 잘하는 것 격려문 — Day 3]`,
         questions: [
           {
             question: "내가 잘하는 것은 무엇인가요?",
@@ -97,41 +132,6 @@ function blankPersonaBaseline(args: {
             },
             coachInterview: [
               `[${args.ctx} 잘하는 것 코치인터뷰 발췌 — Day 3]`,
-            ],
-          },
-        ],
-      },
-      {
-        partTitle: "가치 있는 것",
-        partTitleEn: "I Feel Valuable About It",
-        preface:
-          "내게 '가치 있는 것'은, 나에게 소중한 것, 내가 추구하는 모습 그리고 나의 가치관 같은 것을 말합니다.",
-        examples: [
-          `[${args.ctx} Part3 예시1 — Day 3]`,
-          `[${args.ctx} Part3 예시2 — Day 3]`,
-          `[${args.ctx} Part3 예시3 — Day 3]`,
-        ],
-        closing: `[${args.ctx} Part3 격려문 — Day 3]`,
-        questions: [
-          {
-            question: "나는 이렇게 살고 싶다 하는 모습이 있나요?",
-            meta: "내 인생에 있어 중요한 가치를 알고 있나요? — 알고 있어요",
-            items: [
-              {
-                title: `[${args.ctx} 가치 있는 것 항목 1 제목 — Day 3]`,
-                description: [`[${args.ctx} 가치 있는 것 항목 1 설명 — Day 3]`],
-              },
-              {
-                title: `[${args.ctx} 가치 있는 것 항목 2 제목 — Day 3]`,
-                description: [`[${args.ctx} 가치 있는 것 항목 2 설명 — Day 3]`],
-              },
-            ],
-            insight: {
-              text: `[${args.ctx} 가치 있는 것 인사이트 — Day 3]`,
-              keywords: [`[${args.ctx} 가치 있는 것 키워드들 — Day 3]`],
-            },
-            coachInterview: [
-              `[${args.ctx} 가치 있는 것 코치인터뷰 발췌 — Day 3]`,
             ],
           },
         ],
