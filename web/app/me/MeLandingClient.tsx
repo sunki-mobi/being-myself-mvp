@@ -125,7 +125,7 @@ export function MeLandingClient({
             </div>
           </article>
 
-          {/* 내 보고서 카드 */}
+          {/* 내 보고서 카드 (3-Part baseline) */}
           <article
             className="p-6 rounded-3xl bg-surface-dark text-fg-dark shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer animate-fade-up-delay-2"
             onClick={() => router.push("/me/report")}
@@ -154,6 +154,41 @@ export function MeLandingClient({
                 </p>
               </div>
               <span aria-hidden className="text-2xl text-fg-dark-soft mt-1">
+                →
+              </span>
+            </div>
+          </article>
+
+          {/* 지금까지의 모습 카드 (4-layer 누적 보고서) */}
+          <article
+            className="p-6 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer animate-fade-up-delay-3 border border-border-line"
+            style={{
+              backgroundImage:
+                "linear-gradient(135deg, #f6f4fb 0%, #ece8f5 100%)",
+            }}
+            onClick={() => router.push("/me/long-term")}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                router.push("/me/long-term");
+              }
+            }}
+          >
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex-1">
+                <span className="inline-block px-2 py-0.5 rounded-full bg-selected-bg text-[10px] font-semibold text-purple-deep tracking-wide mb-3">
+                  지금까지의 모습
+                </span>
+                <h2 className="text-xl font-bold text-fg-light mb-2 leading-snug">
+                  현상 · 본질 · 가치 · 존재
+                </h2>
+                <p className="text-xs text-fg-light-soft leading-relaxed">
+                  답변이 쌓일수록 내가 어떤 사람인지 더 선명해져요.
+                </p>
+              </div>
+              <span aria-hidden className="text-2xl text-fg-light-soft mt-1">
                 →
               </span>
             </div>
