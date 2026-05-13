@@ -10,7 +10,17 @@ import type { AnswerCard } from "@/components/TodayAnswerCard";
  * key는 `question::answer` 합성. 같은 pair는 한 번만 fetch (fetchedRef).
  */
 export function useAnswerCards(
-  pairs: { question: string; answer: string; key: string }[],
+  pairs: {
+    question: string;
+    answer: string;
+    key: string;
+    /**
+     * 인증된 사용자에게만 있음 (/me 트랙). 있으면 server가 answer_card 테이블
+     * cache-first로 처리 → 새로고침해도 LLM 재호출 X.
+     * /demo (anonymous)는 undefined → 매번 LLM 호출 (이전 동작).
+     */
+    qaPairId?: string;
+  }[],
   hydrated: boolean,
 ) {
   const [cards, setCards] = useState<Record<string, AnswerCard>>({});
@@ -29,6 +39,7 @@ export function useAnswerCards(
         body: JSON.stringify({
           question: pair.question,
           answer: pair.answer,
+          ...(pair.qaPairId ? { qaPairId: pair.qaPairId } : {}),
         }),
       })
         .then(async (res) => {

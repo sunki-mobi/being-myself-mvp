@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import {
+  useEffect,
+  useState,
+  useCallback,
+  useMemo,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import type { BaselineId } from "./me/baselines";
 import type { HardcodedQuestion } from "./types";
 
@@ -18,6 +25,11 @@ export type ConversationMessage = {
    * 자동 채워지는 빠른 답변 후보 3개.
    */
   suggestedAnswers?: string[];
+  /**
+   * user-answer일 때만 있음. POST /api/me/qa-pairs 응답 후 채워짐.
+   * answer-card 캐시 키로 사용. /demo 트랙은 채워지지 않음 (persistTurns false).
+   */
+  qaPairId?: string;
 };
 
 export type ConversationState = {
@@ -91,24 +103,71 @@ function loadFromStorage(storageKey: string): ConversationState {
   }
 }
 
-/** /api/me/qa-pairs로 fire-and-forget POST. 실패해도 UI는 그대로 흐름. */
-function persistQaPair(body: {
-  conversationId: string;
-  questionIndex: number;
-  questionText: string;
-  reactionText: string | null;
-  answerText: string;
-  isLast: boolean;
-}) {
+/**
+ * qaPairId가 들어오면 LocalStorage 상태의 해당 user-answer 메시지에 attach.
+ * 답변 텍스트와 questionIndex로 동일한 답변을 식별 — reset 후 같은 텍스트로
+ * 다시 답해도 새 row가 받아짐.
+ */
+function attachQaPairId(
+  setState: Dispatch<SetStateAction<ConversationState>>,
+  storageKey: string,
+  questionIndex: number,
+  answerText: string,
+  qaPairId: string,
+) {
+  setState((prev) => {
+    let changed = false;
+    const updated = prev.messages.map((m) => {
+      if (
+        m.role === "user-answer" &&
+        m.questionIndex === questionIndex &&
+        m.text === answerText &&
+        !m.qaPairId
+      ) {
+        changed = true;
+        return { ...m, qaPairId };
+      }
+      return m;
+    });
+    if (!changed) return prev;
+    const next = { ...prev, messages: updated };
+    saveToStorage(storageKey, next);
+    return next;
+  });
+}
+
+/**
+ * /api/me/qa-pairs로 fire-and-forget POST. 실패해도 UI는 그대로 흐름.
+ * 성공 시 `onPersisted` 콜백으로 qaPairId 전달 — 답변 카드 캐시 키로 사용.
+ */
+function persistQaPair(
+  body: {
+    conversationId: string;
+    questionIndex: number;
+    questionText: string;
+    reactionText: string | null;
+    answerText: string;
+    isLast: boolean;
+  },
+  onPersisted?: (qaPairId: string) => void,
+) {
   void fetch("/api/me/qa-pairs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   })
     .then(async (res) => {
-      if (!res.ok && res.status !== 401) {
-        const detail = await res.json().catch(() => ({}));
-        console.error("[qa-pair persist]", res.status, detail);
+      if (!res.ok) {
+        if (res.status !== 401) {
+          const detail = await res.json().catch(() => ({}));
+          console.error("[qa-pair persist]", res.status, detail);
+        }
+        return;
+      }
+      const data = await res.json().catch(() => null);
+      const qaPairId = data?.qaPairId;
+      if (typeof qaPairId === "string" && onPersisted) {
+        onPersisted(qaPairId);
       }
     })
     .catch((err) => console.error("[qa-pair persist]", err));
@@ -320,14 +379,17 @@ export function useConversation(options: ConversationOptions = {}) {
         });
 
         if (persistTurns && ensuredConversationId && questionText) {
-          persistQaPair({
-            conversationId: ensuredConversationId,
-            questionIndex,
-            questionText,
-            reactionText: null,
-            answerText: trimmed,
-            isLast: !justAnsweredFirst,
-          });
+          persistQaPair(
+            {
+              conversationId: ensuredConversationId,
+              questionIndex,
+              questionText,
+              reactionText: null,
+              answerText: trimmed,
+              isLast: !justAnsweredFirst,
+            },
+            (qaPairId) => attachQaPairId(setState, storageKey, questionIndex, trimmed, qaPairId),
+          );
         }
         return;
       }
@@ -357,14 +419,17 @@ export function useConversation(options: ConversationOptions = {}) {
         });
 
         if (persistTurns && ensuredConversationId && questionText) {
-          persistQaPair({
-            conversationId: ensuredConversationId,
-            questionIndex,
-            questionText,
-            reactionText: turn.reaction.trim() ? turn.reaction.trim() : null,
-            answerText: trimmed,
-            isLast: turn.isComplete,
-          });
+          persistQaPair(
+            {
+              conversationId: ensuredConversationId,
+              questionIndex,
+              questionText,
+              reactionText: turn.reaction.trim() ? turn.reaction.trim() : null,
+              answerText: trimmed,
+              isLast: turn.isComplete,
+            },
+            (qaPairId) => attachQaPairId(setState, storageKey, questionIndex, trimmed, qaPairId),
+          );
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : "답변 전송에 실패했어요.");

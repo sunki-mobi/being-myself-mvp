@@ -6,12 +6,18 @@ import {
   buildAnswerCardUserMessage,
 } from "@/lib/ai/answer-card-prompt";
 import { classifyGeminiError } from "@/lib/ai/error-helpers";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
 const requestSchema = z.object({
   question: z.string().min(1).max(500),
   answer: z.string().min(1).max(5000),
+  /**
+   * qaPairId가 있고 사용자가 로그인되어 있으면 answer_card 테이블에서 cache 조회.
+   * /demo (anonymous)는 qaPairId 없이 호출 → 캐시 우회 (매번 LLM).
+   */
+  qaPairId: z.string().uuid().optional(),
 });
 
 const responseSchema = z.object({
@@ -46,6 +52,8 @@ const responseSchema = z.object({
     .describe("핵심 키워드 3~5개."),
 });
 
+type AnswerCard = z.infer<typeof responseSchema>;
+
 export async function POST(request: Request) {
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return Response.json(
@@ -68,18 +76,70 @@ export async function POST(request: Request) {
     );
   }
 
+  // 1) Cache lookup — qaPairId + 인증된 사용자 + Supabase env 가 모두 있을 때만
+  const cacheEligible =
+    !!body.qaPairId &&
+    !!process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    !!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  let supabase: Awaited<ReturnType<typeof createSupabaseServerClient>> | null =
+    null;
+  let userId: string | null = null;
+
+  if (cacheEligible) {
+    supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      userId = user.id;
+      const { data: cached } = await supabase
+        .from("answer_card")
+        .select("card")
+        .eq("qa_pair_id", body.qaPairId!)
+        .maybeSingle();
+      if (cached?.card) {
+        return Response.json(cached.card);
+      }
+    }
+  }
+
+  // 2) Cache miss → LLM 호출
+  let card: AnswerCard;
   try {
     const { output } = await generateText({
       model: google("gemini-2.5-flash-lite"),
       system: ANSWER_CARD_SYSTEM_PROMPT,
-      prompt: buildAnswerCardUserMessage(body),
+      prompt: buildAnswerCardUserMessage({
+        question: body.question,
+        answer: body.answer,
+      }),
       output: Output.object({ schema: responseSchema }),
     });
-
-    return Response.json(output);
+    card = output;
   } catch (err) {
     console.error("[/api/me/answer-card] gemini error", err);
     const { status, body: errBody } = classifyGeminiError(err);
     return Response.json(errBody, { status });
   }
+
+  // 3) Cache write — qaPairId + 인증 사용자 + supabase 셋업된 경우만
+  if (supabase && userId && body.qaPairId) {
+    const { error: upsertErr } = await supabase
+      .from("answer_card")
+      .upsert(
+        {
+          qa_pair_id: body.qaPairId,
+          user_id: userId,
+          card,
+        },
+        { onConflict: "qa_pair_id" },
+      );
+    // 캐시 쓰기 실패는 critical 아님 — LLM 결과는 이미 클라이언트에 반환됨
+    if (upsertErr) {
+      console.error("[/api/me/answer-card] cache write failed", upsertErr);
+    }
+  }
+
+  return Response.json(card);
 }

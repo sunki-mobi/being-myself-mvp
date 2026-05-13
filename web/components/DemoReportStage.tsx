@@ -49,7 +49,13 @@ export function DemoReportStage({
   }, [hydrated, state.userName, router, homePath]);
 
   // 오늘 추가된 Q/A 페어
-  const todayPairs: { question: string; answer: string; key: string }[] = [];
+  // /demo는 anonymous라 qaPairId 없음 — useAnswerCards가 캐시 우회
+  const todayPairs: {
+    question: string;
+    answer: string;
+    key: string;
+    qaPairId?: string;
+  }[] = [];
   let lastQ = "";
   for (const m of state.messages) {
     if (m.role === "ai-question") {
@@ -58,6 +64,7 @@ export function DemoReportStage({
       todayPairs.push({
         question: lastQ,
         answer: m.text,
+        qaPairId: m.qaPairId,
         key: `${lastQ}::${m.text}`,
       });
     }

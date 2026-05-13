@@ -71,7 +71,12 @@ export function ReportStage({
   }, [hydrated, state.userName, router, homePath]);
 
   // 오늘 추가된 Q/A 페어
-  const todayPairs: { question: string; answer: string; key: string }[] = [];
+  const todayPairs: {
+    question: string;
+    answer: string;
+    key: string;
+    qaPairId?: string;
+  }[] = [];
   let lastQ = "";
   for (const m of state.messages) {
     if (m.role === "ai-question") {
@@ -80,6 +85,7 @@ export function ReportStage({
       todayPairs.push({
         question: lastQ,
         answer: m.text,
+        qaPairId: m.qaPairId,
         key: `${lastQ}::${m.text}`,
       });
     }
