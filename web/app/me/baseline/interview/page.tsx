@@ -1,12 +1,17 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { TOTAL_STEPS } from "@/lib/me/baseline-interview-questions";
+import type { InterviewAnswers } from "@/lib/me/baseline-interview-questions";
+import { InterviewClient } from "./InterviewClient";
 
 /**
- * /me/baseline/interview — 음성 셀프인터뷰 (Phase 3b에서 본격 구현).
+ * /me/baseline/interview — Phase 3b 셀프인터뷰 본 흐름.
  *
- * 현재는 placeholder. baseline이 이미 있으면 /me로 보냄 (직접 접근 시
- * 의도치 않게 인터뷰 다시 시키는 거 방지).
+ * Server component에서 user + baseline + progress 조회 후 client island로
+ * 진행 상태 주입. baseline 이미 있으면 /me로 redirect.
+ *
+ * 이탈해서 다시 들어오면 progress의 current_step부터 이어서 시작.
+ * 완료(step === TOTAL_STEPS) 상태에서 들어와도 InterviewClient가 완료 화면 표시.
  */
 export default async function BaselineInterviewPage() {
   const supabase = await createSupabaseServerClient();
@@ -16,6 +21,7 @@ export default async function BaselineInterviewPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/auth/sign-in?next=/me/baseline/interview");
 
+  // 이미 baseline 만들었다면 /me로
   const { data: baseline } = await supabase
     .from("baseline_report")
     .select("id")
@@ -23,27 +29,17 @@ export default async function BaselineInterviewPage() {
     .maybeSingle();
   if (baseline) redirect("/me");
 
+  // 진행 상태 가져오기 (없으면 새 진행)
+  const { data: progress } = await supabase
+    .from("baseline_interview_progress")
+    .select("current_step, answers")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  const initialStep = Math.min(progress?.current_step ?? 0, TOTAL_STEPS);
+  const initialAnswers = (progress?.answers ?? {}) as InterviewAnswers;
+
   return (
-    <main className="min-h-screen w-full flex justify-center bg-[#f6f4fb] lg:bg-gradient-to-b lg:from-[#f6f4fb] lg:to-[#ece8f5]">
-      <div className="w-full max-w-md flex flex-col items-center justify-center bg-surface-light text-fg-light lg:rounded-3xl lg:my-8 lg:min-h-[820px] lg:shadow-xl lg:shadow-brand-200/30 px-6 py-12 text-center gap-6 animate-fade-up">
-        <div className="text-5xl">🎙️</div>
-        <h1 className="text-2xl font-extrabold tracking-tight">
-          음성 셀프인터뷰
-        </h1>
-        <p className="text-sm text-fg-light-soft leading-relaxed max-w-xs">
-          이 자리에서 약 15분간 객관식 + 음성 답변으로 진행되는
-          <br />
-          셀프인터뷰가 곧 시작돼요.
-          <br />
-          <span className="text-fg-light-muted">(다음 업데이트에서 공개)</span>
-        </p>
-        <Link
-          href="/me"
-          className="mt-4 px-5 py-2.5 rounded-full bg-surface-card text-fg-light text-sm font-semibold hover:bg-brand-50 transition-colors"
-        >
-          ← 돌아가기
-        </Link>
-      </div>
-    </main>
+    <InterviewClient initialStep={initialStep} initialAnswers={initialAnswers} />
   );
 }
