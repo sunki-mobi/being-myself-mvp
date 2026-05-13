@@ -9,9 +9,25 @@ import { updateSession } from "@/lib/supabase/middleware";
  * /demo·/auth 등 공개 경로는 그대로 통과.
  */
 export async function proxy(request: NextRequest) {
-  const { supabaseResponse, user } = await updateSession(request);
-
   const pathname = request.nextUrl.pathname;
+
+  // 방어: Supabase env가 없으면 (예: prod 환경변수 누락 직후) Supabase
+  // 클라이언트 생성 자체가 throw → 500. 이 경우 공개 경로는 그대로 통과시키고,
+  // /me/*만 / 로 redirect해서 시연이 끊기지 않게 한다.
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+  ) {
+    if (pathname.startsWith("/me")) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return NextResponse.next();
+  }
+
+  const { supabaseResponse, user } = await updateSession(request);
 
   // /me/* 보호 — 비로그인이면 /auth/sign-in으로
   if (pathname.startsWith("/me") && !user) {
