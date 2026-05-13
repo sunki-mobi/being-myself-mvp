@@ -21,6 +21,9 @@ export const maxDuration = 60;
 
 import { LongTermReportClient } from "./LongTermReportClient";
 
+/** 누적 답변 N개 이상 추가되면 stale로 표시 — 사용자에게 재합성 권유. */
+const STALE_THRESHOLD = 3;
+
 export default async function MeLongTermPage() {
   const supabase = await createSupabaseServerClient();
 
@@ -72,13 +75,23 @@ export default async function MeLongTermPage() {
     .eq("user_id", user.id)
     .maybeSingle();
 
+  const currentTotal = totalAnswers ?? 0;
+
   if (cachedRow) {
+    const basedOn = cachedRow.based_on_qa_count ?? 0;
+    const pendingAnswers = Math.max(0, currentTotal - basedOn);
     const report = shapeToLongTermReport(cachedRow.shape as LongTermShape, {
       userName: displayName,
-      totalAnswers: totalAnswers ?? 0,
+      totalAnswers: currentTotal,
       daySpan: daysFromBaseline,
     });
-    return <LongTermReportClient report={report} />;
+    return (
+      <LongTermReportClient
+        report={report}
+        pendingAnswers={pendingAnswers}
+        isStale={pendingAnswers >= STALE_THRESHOLD}
+      />
+    );
   }
 
   // 캐시 miss → inline 합성
@@ -94,7 +107,13 @@ export default async function MeLongTermPage() {
     return <LongTermErrorView error={result.error} />;
   }
 
-  return <LongTermReportClient report={result.report} />;
+  return (
+    <LongTermReportClient
+      report={result.report}
+      pendingAnswers={0}
+      isStale={false}
+    />
+  );
 }
 
 function LongTermErrorView({ error }: { error: string }) {

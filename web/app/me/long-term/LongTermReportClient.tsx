@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type {
   LongTermLayerCard,
@@ -11,13 +12,49 @@ import type {
  *
  * baseline + qa_pair 누적으로 합성된 LongTermReport를 받아 hero + 키워드 +
  * 4 layer 카드로 표시. 누적이 늘어날수록 내용이 풍부해짐.
+ *
+ * Phase 4b — staleness 표시 + 수동 재합성:
+ *  - `pendingAnswers`: 마지막 합성 이후 추가된 qa_pair 수
+ *  - `isStale`: pendingAnswers가 임계점(3) 이상이면 true → "반영하기" 배너 강조
+ *  - "보고서 새로 만들기" 버튼 → POST /api/me/long-term-report/refresh →
+ *    router.refresh()로 서버 컴포넌트 재실행 → 새 캐시로 다시 렌더
  */
 export function LongTermReportClient({
   report,
+  pendingAnswers,
+  isStale,
 }: {
   report: LongTermReport;
+  pendingAnswers: number;
+  isStale: boolean;
 }) {
   const router = useRouter();
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleRefresh() {
+    setError(null);
+    setRefreshing(true);
+    try {
+      const res = await fetch("/api/me/long-term-report/refresh", {
+        method: "POST",
+      });
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({}));
+        setError(detail?.error ?? `재합성 실패 (${res.status})`);
+        setRefreshing(false);
+        return;
+      }
+      router.refresh();
+      // refresh() 완료 후 server component가 새 row로 다시 렌더 → 이 컴포넌트
+      // 새 props로 마운트되므로 별도 setRefreshing(false) 불필요. 다만 보호용:
+      setTimeout(() => setRefreshing(false), 500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "네트워크 오류");
+      setRefreshing(false);
+    }
+  }
+
   return (
     <main className="min-h-screen w-full flex justify-center bg-[#f6f4fb] lg:bg-gradient-to-b lg:from-[#f6f4fb] lg:to-[#ece8f5]">
       <div className="w-full max-w-md flex flex-col bg-surface-light text-fg-light lg:rounded-3xl lg:my-8 lg:min-h-[820px] lg:shadow-xl lg:shadow-brand-200/30">
@@ -79,11 +116,49 @@ export function LongTermReportClient({
           ))}
         </section>
 
+        {/* Stale 배너 — 누적 답변이 합성 시점보다 많이 늘었을 때 */}
+        {isStale && !refreshing ? (
+          <section className="px-6 pb-2">
+            <div className="p-4 rounded-[12px] bg-selected-bg border border-brand-200">
+              <p className="text-sm text-fg-light leading-relaxed">
+                ✨ 마지막 합성 이후 답변 <b>{pendingAnswers}개</b>가 더 쌓였어요.
+                <br />
+                새로 만들면 더 또렷한 그림이 나올 수 있어요.
+              </p>
+            </div>
+          </section>
+        ) : null}
+
+        {error ? (
+          <section className="px-6 pb-2">
+            <p className="text-sm text-record bg-record/5 px-3 py-2 rounded-[8px]">
+              {error}
+            </p>
+          </section>
+        ) : null}
+
         <section className="px-6 pb-10 flex flex-col gap-3">
           <button
             type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className={`w-full px-6 py-3 rounded-full text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              isStale
+                ? "bg-brand-500 hover:bg-brand-600 text-white"
+                : "bg-surface-card text-fg-light hover:bg-brand-50"
+            }`}
+          >
+            {refreshing
+              ? "다시 만들고 있어요…"
+              : isStale
+                ? `새 답변 ${pendingAnswers}개 반영해서 새로 만들기`
+                : "보고서 새로 만들기"}
+          </button>
+          <button
+            type="button"
             onClick={() => router.push("/me")}
-            className="w-full px-6 py-3 rounded-full bg-surface-card text-fg-light text-sm font-semibold hover:bg-brand-50 transition-colors"
+            disabled={refreshing}
+            className="w-full px-6 py-3 rounded-full bg-transparent text-fg-light-soft text-sm font-medium hover:text-fg-light transition-colors disabled:opacity-50"
           >
             홈으로 돌아가기
           </button>
