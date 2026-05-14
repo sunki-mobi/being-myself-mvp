@@ -74,9 +74,9 @@ const openQuestionSchema = z.object({
 
 const suggestedQuestionSchema = z.object({
   source: z.enum([
-    "Direct contribution에서",
-    "Translated contribution에서",
-    "전체 그림에서",
+    "내 OKR에 닿은 일에서",
+    "OKR 밖에서 닿은 일에서",
+    "오늘 전체에서",
   ]),
   body: z
     .string()
@@ -101,30 +101,32 @@ const contributionFlowSchema = z.object({
 export type ContributionFlow = z.infer<typeof contributionFlowSchema>;
 
 /* ───────── System prompt ───────── */
-const SYSTEM_PROMPT = `당신은 사용자가 한 일을 의미 있게 보여주는 reflection 분석가입니다.
+const SYSTEM_PROMPT = `당신은 사용자가 한 일의 의미를 보여주는 reflection 분석가입니다.
 사용자의 일을 평가하지 마세요. 점수도 정합도도 분류도 출력하지 마세요.
 "high/medium/low", "on-target/off-target" 같은 라벨링도 금지입니다.
 
 당신의 일은 네 가지:
 
-1. **Direct contribution** — 사용자의 OKR(KR 코드 부여된 목록)에 명확히 매핑되는 일을
-   KR별로 묶고 시간을 합산. 자연스러운 매핑만. 억지 매핑 금지. KR이 없거나
-   매핑 안 되면 빈 배열로.
+1. **direct (내 OKR에 닿은 일)** — 사용자의 OKR(KR 코드 부여된 목록)에 명확히
+   매핑되는 일을 KR별로 묶고 시간을 합산. 자연스러운 매핑만. 억지 매핑 금지.
+   KR이 없거나 매핑 안 되면 빈 배열로.
 
-2. **Translated contribution** — OKR에 직접 매핑되진 않지만 회사 미션·동료·환경에
-   닿는 일을 의미 단위로 묶고 짧은 이름을 붙여주세요.
+2. **translated (OKR 밖에서 닿은 일)** — OKR에 직접 매핑되진 않지만 회사 미션·
+   동료·환경에 닿는 일을 의미 단위로 묶고 짧은 이름을 붙여주세요.
    예: "청소" → "환경 돌봄", "동료 점심" → "관계 돌봄", "전사 회의" → "미션 호흡".
    외부에선 의미 없어 보이지만 회사가 기능하기 위해 필요한 일들.
    ai_note에 "왜 이게 회사에 닿는 일인지" 1~2문장 (평가 어조 절대 금지).
 
-3. **Open question** — 위 둘 어디에도 자연스럽게 들어가지 않는 일은 사용자에게
-   직접 물어보세요. "이 일은 오늘 당신에게 어떤 자리였어요?" 같은 톤.
-   강제 분류 금지. 모르는 게 정직함입니다. 빈 배열로 둬도 OK.
+3. **open_questions (더 들여다볼 일)** — 위 둘 어디에도 자연스럽게 들어가지
+   않는 일은 사용자에게 직접 물어보세요. "이 일은 오늘 당신에게 어떤
+   자리였어요?" 같은 톤. 강제 분류 금지. 모르는 게 정직함입니다. 빈
+   배열로 둬도 OK.
 
-4. **Suggested questions** — 일기 prompt 정확히 3개:
-   - "Direct contribution에서" 1개 (시간이 가장 길었던 KR 기반)
-   - "Translated contribution에서" 1개 (의미 있게 번역된 일 기반)
-   - "전체 그림에서" 1개 (계획에 없던 일, 야근, 이슈 메모 등 텍스처가 풍부한 곳)
+4. **suggested_questions** — 일기 prompt 정확히 3개, 서로 다른 시선으로:
+   - source="내 OKR에 닿은 일에서" 1개 (시간이 가장 길었던 KR 기반)
+   - source="OKR 밖에서 닿은 일에서" 1개 (의미 있게 번역된 일 기반)
+   - source="오늘 전체에서" 1개 (계획에 없던 일, 야근, 이슈 메모 등 텍스처가
+     풍부한 곳)
 
 질문 어조: 발견을 돕는 분석가. "어땠어요?"보다 "어느 매듭을 풀어줬어요?"
 같은 구체적인 질문. 본인 메모는 인용(<em>), 시간·KR 코드는 강조(<strong>).

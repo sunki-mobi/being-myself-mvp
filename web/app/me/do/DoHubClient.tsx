@@ -131,7 +131,7 @@ export function DoHubClient({
                 <p className="text-xs text-fg-light-soft leading-relaxed">
                   {hasTodayDiary
                     ? "오늘 작성한 일기가 있어요."
-                    : "퇴근 보고를 붙여넣으면 AI가 오늘의 기여를 묶어줘요."}
+                    : "퇴근 보고를 붙여넣으면 AI가 오늘 한 일의 의미를 정리해줘요."}
                 </p>
               </div>
               <span aria-hidden className="text-2xl text-fg-light-soft mt-1">

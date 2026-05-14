@@ -48,14 +48,29 @@ type Existing = {
   freeNote: string;
 } | null;
 
-type Phase = "paste" | "synthesizing" | "review" | "writing" | "saving" | "done";
+type Phase =
+  | "paste"
+  | "synthesizing"
+  | "review"     // 의미만 보기 — 질문 선택 X
+  | "choose"     // 질문 고르기 단계 (별도)
+  | "writing"    // 일기 입력
+  | "saving"
+  | "done";
 
 /* ───────── Component ───────── */
 
 export function NewDiaryClient({ existing }: { existing: Existing }) {
   const router = useRouter();
 
+  // existing이 있어도 이미 ai_question·answer 등 다 있으면 바로 writing부터
   const initialPhase: Phase = existing ? "writing" : "paste";
+
+  function goReviewToChoose() {
+    setPhase("choose");
+  }
+  function goChooseToWriting() {
+    setPhase("writing");
+  }
   const [phase, setPhase] = useState<Phase>(initialPhase);
   const [eveningReport, setEveningReport] = useState(
     existing?.eveningReport ?? "",
@@ -154,15 +169,19 @@ export function NewDiaryClient({ existing }: { existing: Existing }) {
             onSubmit={handleSynthesize}
           />
         ) : phase === "review" && flow ? (
-          <ReviewStep
-            flow={flow}
+          <ReviewStep flow={flow} onNext={goReviewToChoose} />
+        ) : phase === "choose" && flow ? (
+          <ChooseQuestionStep
+            questions={flow.suggested_questions}
             selectedQuestion={selectedQuestion}
-            onSelectQuestion={setSelectedQuestion}
-            onNext={() => setPhase("writing")}
+            onSelect={setSelectedQuestion}
+            onBack={() => setPhase("review")}
+            onNext={goChooseToWriting}
           />
-        ) : (phase === "writing" || phase === "saving") && flow && selectedQuestion ? (
+        ) : (phase === "writing" || phase === "saving") &&
+          flow &&
+          selectedQuestion ? (
           <WritingStep
-            flow={flow}
             question={selectedQuestion}
             answer={answer}
             setAnswer={setAnswer}
@@ -171,9 +190,9 @@ export function NewDiaryClient({ existing }: { existing: Existing }) {
             busy={phase === "saving"}
             error={error}
             onSave={handleSave}
-            onBackToReview={() => {
+            onBackToChoose={() => {
               setError(null);
-              setPhase("review");
+              setPhase("choose");
             }}
           />
         ) : phase === "done" ? (
@@ -194,10 +213,12 @@ function Header({ phase, onBack }: { phase: Phase; onBack: () => void }) {
     phase === "paste" || phase === "synthesizing"
       ? "1. 퇴근 보고 붙여넣기"
       : phase === "review"
-        ? "2. 오늘의 기여 흐름"
-        : phase === "writing" || phase === "saving"
-          ? "3. 오늘의 한 줄"
-          : "완료";
+        ? "2. 오늘 한 일의 의미"
+        : phase === "choose"
+          ? "3. 오늘의 질문 고르기"
+          : phase === "writing" || phase === "saving"
+            ? "4. 오늘의 한 줄"
+            : "완료";
   return (
     <header className="px-6 pt-8 animate-fade-up">
       <button
@@ -251,7 +272,7 @@ function PasteStep({
       <p className="mt-3 text-sm text-fg-light-soft leading-relaxed">
         퇴근 보고·메모 어떤 형식이든 OK. 시간대와 일이 묶여 있으면 더 풍부해요.
         <br />
-        AI가 OKR과 회사 미션에 닿는 결로 정리해줘요.
+        AI가 OKR과 회사 미션에 닿은 일들로 의미를 정리해줘요.
       </p>
 
       <textarea
@@ -277,31 +298,31 @@ function PasteStep({
         disabled={busy || text.trim().length < 30}
         className="mt-6 w-full py-4 rounded-full bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-base font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed no-select"
       >
-        {busy ? "AI가 읽고 있어요… (약 10초)" : "기여 흐름 만들기"}
+        {busy ? "AI가 읽고 있어요… (약 10초)" : "오늘 한 일의 의미 정리"}
       </button>
     </section>
   );
 }
 
-/* ───────── Step 2: review ───────── */
+/* ───────── Step 2: review (의미만 보기) ───────── */
 
 function ReviewStep({
   flow,
-  selectedQuestion,
-  onSelectQuestion,
   onNext,
 }: {
   flow: ContributionFlow;
-  selectedQuestion: SuggestedQuestionT | null;
-  onSelectQuestion: (q: SuggestedQuestionT) => void;
   onNext: () => void;
 }) {
   return (
     <section className="flex-1 px-6 pt-6 pb-8 flex flex-col gap-5 animate-fade-up-delay-1 overflow-y-auto">
+      <p className="text-sm text-fg-light-soft leading-relaxed">
+        AI가 오늘 한 일을 세 갈래로 묶었어요.
+      </p>
+
       {flow.direct.length > 0 ? (
         <div>
           <p className="text-[10px] font-semibold text-purple-deep tracking-wide mb-2">
-            Direct contribution
+            내 OKR에 닿은 일
           </p>
           <div className="flex flex-col gap-3">
             {flow.direct.map((d, i) => (
@@ -314,7 +335,7 @@ function ReviewStep({
       {flow.translated.length > 0 ? (
         <div>
           <p className="text-[10px] font-semibold text-brand-600 tracking-wide mb-2">
-            Translated contribution
+            OKR 밖에서 닿은 일
           </p>
           <div className="flex flex-col gap-3">
             {flow.translated.map((t, i) => (
@@ -327,7 +348,7 @@ function ReviewStep({
       {flow.open_questions.length > 0 ? (
         <div>
           <p className="text-[10px] font-semibold text-fg-light-muted tracking-wide mb-2">
-            Open question — AI도 모르는 일
+            더 들여다볼 일 — AI도 잘 모르는 일
           </p>
           <div className="flex flex-col gap-3">
             {flow.open_questions.map((q, i) => (
@@ -345,48 +366,89 @@ function ReviewStep({
         </div>
       ) : (
         <p className="text-xs text-fg-light-muted italic">
-          오늘은 모두 분류됐어요. 다행이에요 — 또는 AI가 자신만만한 걸 수도 있고요.
+          오늘은 모두 정리됐어요. 다행이에요 — 또는 AI가 자신만만한 걸 수도 있고요.
         </p>
       )}
-
-      {flow.suggested_questions.length > 0 ? (
-        <div className="mt-2">
-          <p className="text-xs font-semibold text-fg-light-soft mb-2">
-            오늘 일기로 적어볼 질문 — 한 결을 고르세요
-          </p>
-          <div className="flex flex-col gap-2">
-            {flow.suggested_questions.map((q, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => onSelectQuestion(q)}
-                className={`text-left p-3 rounded-[10px] border transition-colors ${
-                  selectedQuestion === q
-                    ? "border-brand-500 bg-selected-bg"
-                    : "border-border-line hover:bg-surface-card"
-                }`}
-              >
-                <p className="text-[10px] font-semibold text-purple-deep mb-1 tracking-wide">
-                  {q.source}
-                </p>
-                <div
-                  className="text-sm text-fg-light leading-relaxed"
-                  dangerouslySetInnerHTML={{ __html: q.body }}
-                />
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
 
       <button
         type="button"
         onClick={onNext}
-        disabled={!selectedQuestion}
-        className="mt-4 w-full py-4 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-base font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed no-select"
+        className="mt-4 w-full py-4 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-base font-semibold transition-colors no-select"
       >
-        오늘의 한 줄로 마무리하기
+        다음 — 오늘의 질문 고르기
       </button>
+    </section>
+  );
+}
+
+/* ───────── Step 3: choose question ───────── */
+
+function ChooseQuestionStep({
+  questions,
+  selectedQuestion,
+  onSelect,
+  onBack,
+  onNext,
+}: {
+  questions: SuggestedQuestionT[];
+  selectedQuestion: SuggestedQuestionT | null;
+  onSelect: (q: SuggestedQuestionT) => void;
+  onBack: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <section className="flex-1 px-6 pt-6 pb-8 flex flex-col gap-5 animate-fade-up-delay-1 overflow-y-auto">
+      <div>
+        <h1 className="text-[22px] font-extrabold leading-tight tracking-[-0.02em] text-fg-light">
+          오늘 일기로
+          <br />
+          어떤 질문에 답해볼까요?
+        </h1>
+        <p className="mt-3 text-sm text-fg-light-soft leading-relaxed">
+          세 가지 시선의 질문을 만들어 봤어요. 마음에 닿는 하나를 골라주세요.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        {questions.map((q, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onSelect(q)}
+            className={`text-left p-4 rounded-[12px] border transition-colors ${
+              selectedQuestion === q
+                ? "border-brand-500 bg-selected-bg shadow-sm"
+                : "border-border-line bg-surface-paper hover:bg-surface-card"
+            }`}
+          >
+            <p className="text-[10px] font-semibold text-purple-deep mb-2 tracking-wide">
+              {q.source}
+            </p>
+            <div
+              className="text-sm text-fg-light leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: q.body }}
+            />
+          </button>
+        ))}
+      </div>
+
+      <div className="flex gap-3 mt-2">
+        <button
+          type="button"
+          onClick={onBack}
+          className="flex-1 py-4 rounded-full bg-surface-card text-fg-light text-base font-semibold transition-colors"
+        >
+          돌아가기
+        </button>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={!selectedQuestion}
+          className="flex-1 py-4 rounded-full bg-brand-500 hover:bg-brand-600 text-white text-base font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          이 질문으로
+        </button>
+      </div>
     </section>
   );
 }
@@ -446,10 +508,9 @@ function TranslatedCard({ t }: { t: TranslatedT }) {
   );
 }
 
-/* ───────── Step 3: writing ───────── */
+/* ───────── Step 4: writing — 일기 입력 ───────── */
 
 function WritingStep({
-  flow,
   question,
   answer,
   setAnswer,
@@ -458,9 +519,8 @@ function WritingStep({
   busy,
   error,
   onSave,
-  onBackToReview,
+  onBackToChoose,
 }: {
-  flow: ContributionFlow;
   question: SuggestedQuestionT;
   answer: string;
   setAnswer: (v: string) => void;
@@ -469,12 +529,12 @@ function WritingStep({
   busy: boolean;
   error: string | null;
   onSave: () => void;
-  onBackToReview: () => void;
+  onBackToChoose: () => void;
 }) {
-  void flow;
   const canSave = (answer.trim() || freeNote.trim()) && !busy;
   return (
     <section className="flex-1 px-6 pt-6 pb-8 flex flex-col gap-5 animate-fade-up-delay-1 overflow-y-auto">
+      {/* 선택된 질문 카드 */}
       <div className="p-4 rounded-[12px] bg-selected-bg">
         <p className="text-[10px] font-semibold text-purple-deep mb-2 tracking-wide">
           {question.source}
@@ -485,9 +545,10 @@ function WritingStep({
         />
       </div>
 
-      <label className="flex flex-col gap-1.5">
+      {/* 질문 답변 — 질문 카드 바로 아래 (연장선) */}
+      <label className="flex flex-col gap-1.5 -mt-2">
         <span className="text-xs font-medium text-fg-light-soft">
-          질문에 답해보기 (선택)
+          이 질문에 답해보기 (선택)
         </span>
         <textarea
           value={answer}
@@ -498,18 +559,36 @@ function WritingStep({
         />
       </label>
 
-      <label className="flex flex-col gap-1.5">
-        <span className="text-xs font-medium text-fg-light-soft">
-          자유롭게 적기 (선택)
+      {/* 시각적 구분 — "또는" */}
+      <div className="my-1 flex items-center gap-3">
+        <div className="flex-1 h-px bg-border-line" />
+        <span className="text-[10px] text-fg-light-muted tracking-[0.2em]">
+          또는
         </span>
+        <div className="flex-1 h-px bg-border-line" />
+      </div>
+
+      {/* 자유 일기 카드 — 일기장스러운 톤으로 분리 */}
+      <div className="p-4 rounded-[12px] bg-[#fbfaff] border border-brand-100 shadow-card">
+        <div className="flex items-center gap-2 mb-3">
+          <span aria-hidden className="text-base">
+            📔
+          </span>
+          <p className="text-sm font-semibold text-fg-light">
+            오늘의 자유 일기
+            <span className="text-xs font-normal text-fg-light-soft ml-1">
+              (선택)
+            </span>
+          </p>
+        </div>
         <textarea
           value={freeNote}
           onChange={(e) => setFreeNote(e.target.value)}
           disabled={busy}
-          placeholder="질문에 묶이지 않은 오늘의 감각"
-          className="min-h-[100px] w-full px-4 py-3 rounded-[12px] border border-border-line bg-surface-paper text-fg-light text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:opacity-50"
+          placeholder="질문에 묶이지 않은 오늘의 감각·생각·기억 — 무엇이든"
+          className="min-h-[140px] w-full px-0 py-0 bg-transparent text-fg-light text-sm leading-[1.8] resize-none focus:outline-none disabled:opacity-50 placeholder:text-fg-light-muted"
         />
-      </label>
+      </div>
 
       <p className="text-xs text-fg-light-muted text-center">
         🔒 본인만 봅니다. 회사의 누구도 접근할 수 없어요.
@@ -524,7 +603,7 @@ function WritingStep({
       <div className="flex gap-3 mt-2">
         <button
           type="button"
-          onClick={onBackToReview}
+          onClick={onBackToChoose}
           disabled={busy}
           className="flex-1 py-4 rounded-full bg-surface-card text-fg-light text-base font-semibold transition-colors disabled:opacity-50"
         >
