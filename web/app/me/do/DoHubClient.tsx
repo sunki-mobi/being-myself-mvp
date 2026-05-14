@@ -83,12 +83,12 @@ export function DoHubClient({
                   # 매일 · 5분
                 </span>
                 <h2 className="text-lg font-bold text-fg-light mb-2 leading-snug">
-                  {hasOngoing ? "이어서 답변하기" : "오늘의 두 질문에 답하기"}
+                  Being myself
                 </h2>
                 <p className="text-xs text-fg-light/70 leading-relaxed">
                   {hasOngoing
-                    ? `${answeredCount}개 답변 누적 · 진행 중`
-                    : "두 가지 질문에 답하면 보고서가 쌓여요."}
+                    ? `오늘의 두 질문 · ${answeredCount}개 답변 누적 · 진행 중`
+                    : "오늘의 두 질문에 답하면 보고서가 쌓여요. 5분이면 충분해요."}
                 </p>
               </div>
               <span aria-hidden className="text-2xl text-fg-light/70 mt-1">

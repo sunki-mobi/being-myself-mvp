@@ -85,10 +85,10 @@ export function MeLandingClient({
               style={{ color: "#FFFFFD" }}
             >
               <span style={{ fontWeight: 500, fontSize: 22 }}>
-                나에게 집중하는 시간,
+                소명대로 일하는 도구,
               </span>
               <br />
-              <span style={{ fontWeight: 800, fontSize: 28 }}>Being myself</span>
+              <span style={{ fontWeight: 800, fontSize: 28 }}>Being</span>
             </h1>
           </div>
 
@@ -122,7 +122,7 @@ export function MeLandingClient({
             href="/me/do"
             tag="# 오늘"
             title="오늘 할 일"
-            preview="매일의 두 질문 · 소명일기"
+            preview="Being myself · 소명일기"
             delayClass="animate-fade-up-delay-1"
           />
           <ContentCard
