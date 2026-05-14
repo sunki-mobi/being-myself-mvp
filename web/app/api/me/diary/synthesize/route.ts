@@ -178,6 +178,8 @@ const SYSTEM_PROMPT = `당신은 사용자가 한 일의 의미를 비춰주는 
 type KeyResult = { code?: string; title?: string; owner?: string };
 type Objective = { title?: string; key_results?: KeyResult[] };
 type OkrData = {
+  /** /me/settings/goal에서 사용자가 자유 입력한 목표 본문 (OKR/KPI/분기 목표 등) */
+  raw_text?: string;
   objectives?: Objective[];
   사업부_okr?: KeyResult[];
 };
@@ -200,6 +202,15 @@ function formatOkrContext(okrRow: {
   }
 
   const okr = (okrRow.okr_data as OkrData | undefined) ?? {};
+
+  // V1 — /me/settings/goal에서 자유 입력한 raw_text가 1순위.
+  // 사용자가 직접 적은 OKR/KPI/목표 형식 어떤 것이든 그대로 AI 컨텍스트로.
+  if (okr.raw_text) {
+    lines.push("[내가 등록한 목표·기준]");
+    lines.push(okr.raw_text);
+    lines.push("");
+  }
+
   if (okr.objectives && okr.objectives.length > 0) {
     lines.push("[Objectives / Key Results]");
     for (const obj of okr.objectives) {

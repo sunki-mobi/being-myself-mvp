@@ -42,16 +42,12 @@ export function MeLandingClient({
           className="gradient-hero text-fg-dark px-6 pt-10 rounded-b-[2rem] relative overflow-hidden animate-fade-up"
           style={{ height: 240 }}
         >
-          <form
-            action="/auth/sign-out"
-            method="POST"
-            className="absolute top-4 right-4 z-20"
-          >
-            <button
-              type="submit"
-              aria-label="로그아웃"
+          <div className="absolute top-4 right-4 z-20 flex items-center gap-1">
+            <Link
+              href="/me/settings"
+              aria-label="설정"
+              title="설정"
               className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors"
-              title="로그아웃"
             >
               <svg
                 viewBox="0 0 24 24"
@@ -61,14 +57,38 @@ export function MeLandingClient({
                 className="w-5 h-5 text-fg-dark-soft"
                 aria-hidden
               >
+                <circle cx="12" cy="12" r="3" />
                 <path
-                  d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"
+                  d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                 />
               </svg>
-            </button>
-          </form>
+            </Link>
+            <form action="/auth/sign-out" method="POST">
+              <button
+                type="submit"
+                aria-label="로그아웃"
+                className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/10 active:bg-white/20 transition-colors"
+                title="로그아웃"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  className="w-5 h-5 text-fg-dark-soft"
+                  aria-hidden
+                >
+                  <path
+                    d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            </form>
+          </div>
 
           <div className="relative z-10 w-3/5">
             <p
