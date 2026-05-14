@@ -18,7 +18,7 @@ Access the dev server via `http://127.0.0.1:3000` or LAN IP — `localhost` reso
 The `/me` track talks to Gemini via Vercel AI SDK 6. Notes:
 
 - Provider: `@ai-sdk/google` (`^3.0`)
-- Default model: `google("gemini-2.5-flash")`
+- Default model: `google("gemini-2.5-flash-lite")` (Free tier ~1000/일. `gemini-2.5-flash`는 20/일이라 11명 규모에선 즉시 한도 초과 — 모든 라우트가 flash-lite로 통일되어 있어야 함)
 - Structured output: `generateText` + `Output.object({ schema })` (not the deprecated `generateObject`)
 - Server route: `app/api/me/chat/route.ts` (Node runtime; never call Gemini from the client)
 - Env var: `GOOGLE_GENERATIVE_AI_API_KEY` in `web/.env.local` (see `.env.example`). Get a key in 5 minutes at https://aistudio.google.com/apikey

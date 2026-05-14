@@ -1,19 +1,17 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 
 /**
- * S-00 스플래시 / 표지 (기획안 §6.2 기준).
+ * S-00 스플래시 / 표지.
  *
- * 다크 보라 hero가 화면을 가득 채우는 표지 톤. Being Myself 로고 + 슬로건 +
- * 두 진입 버튼:
- *   - "체험해보기 (게스트)" → /demo  (박람회 방문자)
- *   - "내 데이터로 시작 (로그인)" → /me  (모비니티 내부 구성원 / 본인 시연)
+ * 박람회(2026-05-12) 이후 본 서비스 중심으로 weight 재조정:
+ *   - "시작하기" → /me  (primary, brand-500 큰 버튼)
+ *   - "게스트 데모 살펴보기" → /demo  (푸터 위 작은 텍스트 링크)
  *
- * 박람회 부스 iPad는 /demo에 직접 북마크되어 있으니 이 표지는:
- *   - 일반 방문자가 URL 직접 접근 시 첫 인상
- *   - 운영자가 "본 서비스 보여드릴게요" 할 때 두 트랙 모두 같은 표지에서 분기
+ * /demo는 잠재 고객 시연용으로 유지하되 본 서비스 진입을 가리지 않도록
+ * weight를 확 낮춤. 박람회 부스 iPad는 /demo 직접 북마크라 이 표지를
+ * 거치지 않으니 영향 없음.
  */
 export default function LandingPage() {
   return (
@@ -71,34 +69,32 @@ export default function LandingPage() {
           </div>
 
 
-          {/* 진입 버튼 — 두 트랙 */}
-          <div className="flex flex-col gap-3 animate-fade-up-delay-2">
-            <Link
-              href="/demo"
-              className="block w-full px-6 py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 active:scale-[0.99] transition-all text-center"
-            >
-              <span className="block text-base font-semibold text-white">
-                체험해보기
-              </span>
-              <span className="block text-xs text-white/70 mt-0.5">
-                게스트 · 5분 데모
-              </span>
-            </Link>
-
+          {/* 진입 — 본 서비스 중심 */}
+          <div className="animate-fade-up-delay-2">
             <Link
               href="/me"
-              className="block w-full px-6 py-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/15 hover:bg-white/15 active:scale-[0.99] transition-all text-center"
+              className="block w-full px-6 py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 active:scale-[0.99] transition-all text-center shadow-lg shadow-brand-500/20"
             >
-              <span className="block text-base font-semibold text-fg-dark">
-                내 데이터로 시작
+              <span className="block text-base font-semibold text-white">
+                시작하기
               </span>
-              <span className="block text-xs text-fg-dark-soft mt-0.5">
+              <span className="block text-xs text-white/70 mt-0.5">
                 회원가입 · 로그인
               </span>
             </Link>
           </div>
 
-          <p className="text-center text-xs text-fg-dark-soft/60 mt-8 animate-fade-up-delay-3">
+          {/* 데모 — weight 낮춘 텍스트 링크 */}
+          <p className="text-center mt-6 animate-fade-up-delay-3">
+            <Link
+              href="/demo"
+              className="text-xs text-fg-dark-soft/70 hover:text-fg-dark-soft underline-offset-4 hover:underline transition-colors"
+            >
+              게스트 데모 살펴보기 →
+            </Link>
+          </p>
+
+          <p className="text-center text-[11px] text-fg-dark-soft/50 mt-8 animate-fade-up-delay-3">
             © 2026 MOBINITY. All Rights Reserved.
           </p>
         </section>

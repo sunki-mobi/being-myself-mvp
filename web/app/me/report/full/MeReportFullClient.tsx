@@ -131,21 +131,6 @@ function PartBody({ part }: { part: BaselinePart }) {
         </h2>
       </div>
 
-      <p className="text-sm text-fg-light leading-relaxed">{part.preface}</p>
-
-      <div className="p-4 rounded-2xl bg-brand-50 border border-brand-100">
-        <p className="text-xs font-semibold text-brand-600 mb-2">💡 예를 들어</p>
-        <ul className="text-sm text-fg-light leading-relaxed space-y-1">
-          {part.examples.map((ex, idx) => (
-            <li key={idx}>· {ex}</li>
-          ))}
-        </ul>
-      </div>
-
-      <p className="text-xs text-fg-light-soft leading-relaxed">
-        {part.closing}
-      </p>
-
       {part.questions.map((q, idx) => (
         <QuestionBlock key={idx} q={q} />
       ))}
