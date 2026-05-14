@@ -8,6 +8,7 @@ import {
 import { classifyGeminiError } from "@/lib/ai/error-helpers";
 import { indexBaseline, summarizeBaseline } from "@/lib/me/baseline-report";
 import { getBaseline, isBaselineId } from "@/lib/me/baselines";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 
@@ -23,8 +24,8 @@ const requestSchema = z.object({
     .min(1)
     .max(6),
   /**
-   * 페이스메이커가 컨텍스트로 인지할 baseline ID. 미지정 시 "skpan" (방선기).
-   * /demo 트랙은 페르소나 baselineId(`minister` / `worker` / `student`)를 보냄.
+   * 페르소나 baseline ID. /demo 트랙에서 `minister`/`worker`/`student` 보냄.
+   * me 트랙은 미지정 — 본인 baseline 컨텍스트 주입은 Phase A 작업으로 추후.
    */
   baselineId: z
     .string()
@@ -66,11 +67,39 @@ const responseSchema = z.object({
     ),
 });
 
+/**
+ * KST(Asia/Seoul) 기준 오늘 날짜 YYYY-MM-DD.
+ * Vercel server는 UTC라 timezone 명시 변환 필요.
+ */
+function getKstToday(): string {
+  return new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Seoul" });
+}
+
+/**
+ * 오늘(KST) 사용자의 qa_pair 누적 수 — staleness 판단용.
+ * 한 날에 새 답변이 추가되면 qa_count가 늘어남 → 캐시 invalidate.
+ */
+async function countTodayQaPairs(
+  supabase: Awaited<ReturnType<typeof createSupabaseServerClient>>,
+  userId: string,
+): Promise<number> {
+  const today = getKstToday();
+  const startKst = `${today}T00:00:00+09:00`;
+  const endKst = `${today}T23:59:59.999+09:00`;
+  const { count } = await supabase
+    .from("qa_pair")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .gte("created_at", startKst)
+    .lte("created_at", endKst);
+  return count ?? 0;
+}
+
 export async function POST(request: Request) {
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     return Response.json(
       {
-        error: "AI 키 설정에 문제가 있어요. 박람회 운영자에게 알려주세요.",
+        error: "AI 키 설정에 문제가 있어요.",
         detail: "GOOGLE_GENERATIVE_AI_API_KEY missing.",
       },
       { status: 500 },
@@ -90,9 +119,14 @@ export async function POST(request: Request) {
 
   const { userName, todayAnswers, baselineId } = body;
 
-  // baselineId 명시 시에만 페르소나 baseline로 connections 매칭 (demo 트랙용).
-  // 미지정 시(me 트랙) 시드 skpan baseline이 LLM에 노출되는 risk 차단 위해
-  // connections 없이 단순 fallback 반환. 본인 baseline 매칭은 추후 fix.
+  // 인증 — me 트랙은 인증 필수. demo 트랙(baselineId 명시)도 인증된 사용자만
+  // 캐시 사용 가능 (게스트는 캐시 없이 매번 LLM — V1 단순화).
+  const supabase = await createSupabaseServerClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // baselineId 명시 안 한 me 트랙 — Phase A 전까지 fallback (LLM 호출 안 함).
   if (!baselineId || !isBaselineId(baselineId)) {
     return Response.json({
       summary: `오늘 답해주신 ${todayAnswers.length}개 답변, 잘 담아둘게요.`,
@@ -102,9 +136,58 @@ export async function POST(request: Request) {
     });
   }
 
-  const baseline = getBaseline(baselineId);
+  // 인증된 사용자 — daily_digest 캐시 hit 시도.
+  if (user) {
+    const today = getKstToday();
+    const currentQaCount = await countTodayQaPairs(supabase, user.id);
 
+    const { data: cached } = await supabase
+      .from("daily_digest")
+      .select("digest, qa_count")
+      .eq("user_id", user.id)
+      .eq("digest_date", today)
+      .maybeSingle();
+
+    if (cached && cached.qa_count === currentQaCount) {
+      return Response.json(cached.digest);
+    }
+
+    // 캐시 miss 또는 stale → LLM + 저장
+    try {
+      const baseline = getBaseline(baselineId);
+      const { output } = await generateText({
+        model: google("gemini-2.5-flash-lite"),
+        system: DIGEST_SYSTEM_PROMPT,
+        prompt: buildDigestUserMessage({
+          userName,
+          todayAnswers,
+          index: indexBaseline(baseline),
+          baselineSummary: summarizeBaseline(baseline),
+        }),
+        output: Output.object({ schema: responseSchema }),
+      });
+
+      await supabase.from("daily_digest").upsert(
+        {
+          user_id: user.id,
+          digest_date: today,
+          digest: output,
+          qa_count: currentQaCount,
+        },
+        { onConflict: "user_id,digest_date" },
+      );
+
+      return Response.json(output);
+    } catch (err) {
+      console.error("[/api/me/digest] gemini error", err);
+      const { status, body: errBody } = classifyGeminiError(err);
+      return Response.json(errBody, { status });
+    }
+  }
+
+  // 게스트(인증 없음) — 캐시 없이 매번 LLM. /demo 트랙 가정.
   try {
+    const baseline = getBaseline(baselineId);
     const { output } = await generateText({
       model: google("gemini-2.5-flash-lite"),
       system: DIGEST_SYSTEM_PROMPT,
@@ -116,7 +199,6 @@ export async function POST(request: Request) {
       }),
       output: Output.object({ schema: responseSchema }),
     });
-
     return Response.json(output);
   } catch (err) {
     console.error("[/api/me/digest] gemini error", err);
