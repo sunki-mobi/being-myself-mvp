@@ -21,12 +21,20 @@ export default function SignUpPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [agreePrivacy, setAgreePrivacy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingVerification, setPendingVerification] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const canSubmit = agreeTerms && agreePrivacy && !loading;
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!agreeTerms || !agreePrivacy) {
+      setError("이용약관과 개인정보 처리방침에 모두 동의해야 가입할 수 있어요.");
+      return;
+    }
     setError(null);
     setLoading(true);
 
@@ -134,13 +142,53 @@ export default function SignUpPage() {
             />
           </label>
 
+          {/* 동의 체크박스 */}
+          <div className="flex flex-col gap-2 mt-2">
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreeTerms}
+                onChange={(e) => setAgreeTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-brand-500 cursor-pointer"
+              />
+              <span className="text-xs text-fg-light-soft leading-relaxed">
+                <Link
+                  href="/legal/terms"
+                  target="_blank"
+                  className="text-brand-600 underline-offset-4 hover:underline"
+                >
+                  이용약관
+                </Link>
+                에 동의합니다.
+              </span>
+            </label>
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={agreePrivacy}
+                onChange={(e) => setAgreePrivacy(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-brand-500 cursor-pointer"
+              />
+              <span className="text-xs text-fg-light-soft leading-relaxed">
+                <Link
+                  href="/legal/privacy"
+                  target="_blank"
+                  className="text-brand-600 underline-offset-4 hover:underline"
+                >
+                  개인정보 처리방침
+                </Link>
+                에 동의합니다. (답변이 AI 정리에 사용돼요)
+              </span>
+            </label>
+          </div>
+
           {error ? (
             <p className="text-sm text-record bg-record/5 px-3 py-2 rounded-[8px]">
               {error}
             </p>
           ) : null}
 
-          <PrimaryButton type="submit" disabled={loading} className="mt-2">
+          <PrimaryButton type="submit" disabled={!canSubmit} className="mt-2">
             {loading ? "가입 중…" : "가입하기"}
           </PrimaryButton>
         </form>

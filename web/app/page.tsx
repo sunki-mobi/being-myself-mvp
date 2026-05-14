@@ -74,7 +74,7 @@ export default function LandingPage() {
           {/* 진입 버튼 — 두 트랙 */}
           <div className="flex flex-col gap-3 animate-fade-up-delay-2">
             <Link
-              href="/demo/prepare/1"
+              href="/demo"
               className="block w-full px-6 py-4 rounded-2xl bg-brand-500 hover:bg-brand-600 active:scale-[0.99] transition-all text-center"
             >
               <span className="block text-base font-semibold text-white">

@@ -77,13 +77,13 @@ export function BaselineSelectClient({
               backgroundImage:
                 "linear-gradient(135deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 60%, var(--grad-stop-3) 100%)",
             }}
-            onClick={() => router.push("/me/baseline/interview")}
+            onClick={() => router.push("/me/baseline/prepare/1")}
             role="button"
             tabIndex={0}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
                 e.preventDefault();
-                router.push("/me/baseline/interview");
+                router.push("/me/baseline/prepare/1");
               }
             }}
           >
