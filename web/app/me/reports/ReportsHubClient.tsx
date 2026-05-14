@@ -23,7 +23,8 @@ export function ReportsHubClient({
     title: string;
     sub: string;
     href: string;
-    variant: "purple" | "dark" | "neutral";
+    bgImage: string;
+    textTone: "light" | "dark";
   }[] = [
     {
       key: "baseline",
@@ -31,7 +32,8 @@ export function ReportsHubClient({
       title: "셀프인터뷰 보고서",
       sub: "좋아하는 · 잘하는 · 가치 있는 것 3 Part",
       href: "/me/report/full",
-      variant: "purple",
+      bgImage: "/img/list/iridescent.svg",
+      textTone: "dark",
     },
     {
       key: "long-term",
@@ -39,7 +41,8 @@ export function ReportsHubClient({
       title: "지금까지의 모습",
       sub: "현상 · 본질 · 가치 · 존재 4단계",
       href: "/me/long-term",
-      variant: "dark",
+      bgImage: "/img/list/navy.svg",
+      textTone: "light",
     },
     {
       key: "daily",
@@ -48,7 +51,8 @@ export function ReportsHubClient({
       sub:
         qaCount > 0 ? `${qaCount}개 답변 누적` : "오늘 답변하면 디제스트가 만들어져요.",
       href: "/me/report",
-      variant: "neutral",
+      bgImage: "/img/list/dawn.svg",
+      textTone: "dark",
     },
     {
       key: "diary",
@@ -59,7 +63,8 @@ export function ReportsHubClient({
           ? `${diaryCount}개 일기 누적`
           : "오늘부터 일기 쓰면 여기에 쌓여요.",
       href: "/me/diary",
-      variant: "neutral",
+      bgImage: "/img/list/mint-deep.svg",
+      textTone: "dark",
     },
   ];
 
@@ -94,43 +99,53 @@ export function ReportsHubClient({
           </h1>
         </header>
 
-        <section className="flex-1 px-6 py-8 flex flex-col gap-4">
+        <section className="flex-1 px-6 py-8 flex flex-col gap-1.5">
           {cards.map((c, idx) => (
             <Link
               key={c.key}
               href={c.href}
               prefetch
-              className={`${variantClass(
-                c.variant,
-              )} block p-5 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all animate-fade-up-delay-${
+              className={`relative block no-select active:scale-[0.99] transition-transform animate-fade-up-delay-${
                 Math.min(idx, 3) + 1
               }`}
-              style={
-                c.variant === "purple"
-                  ? {
-                      backgroundImage:
-                        "linear-gradient(135deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 60%, var(--grad-stop-3) 100%)",
-                    }
-                  : undefined
-              }
+              style={{
+                // 검증된 padding/minHeight — 사용자가 "맞는 디자인"이라 확정.
+                padding: "20px 32px 22px 28px",
+                backgroundImage: `url('${c.bgImage}')`,
+                backgroundSize: "100% 100%",
+                backgroundRepeat: "no-repeat",
+                backgroundColor: "transparent",
+                minHeight: 132,
+              }}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
                   <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide mb-2 ${badgeClass(
-                      c.variant,
+                    className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold tracking-wide mb-1.5 ${badgeClass(
+                      c.textTone,
                     )}`}
                   >
                     {c.badge}
                   </span>
-                  <h2 className={`text-base font-bold leading-snug mb-1 ${titleClass(c.variant)}`}>
+                  <h2
+                    className={`text-base font-bold leading-snug mb-0.5 ${titleClass(
+                      c.textTone,
+                    )}`}
+                  >
                     {c.title}
                   </h2>
-                  <p className={`text-xs leading-relaxed ${subClass(c.variant)}`}>
+                  <p
+                    className={`text-xs leading-relaxed truncate ${subClass(
+                      c.textTone,
+                    )}`}
+                  >
                     {c.sub}
                   </p>
                 </div>
-                <span aria-hidden className={`text-xl mt-1 ${subClass(c.variant)}`}>
+                <span
+                  aria-hidden
+                  className={`text-xl mt-1 ${subClass(c.textTone)}`}
+                >
                   →
                 </span>
               </div>
@@ -142,32 +157,16 @@ export function ReportsHubClient({
   );
 }
 
-function variantClass(v: "purple" | "dark" | "neutral"): string {
-  switch (v) {
-    case "purple":
-      return "";
-    case "dark":
-      return "bg-surface-dark text-fg-dark";
-    case "neutral":
-      return "border border-border-line bg-surface-paper";
-  }
+function badgeClass(tone: "light" | "dark"): string {
+  return tone === "light"
+    ? "bg-white/15 text-white"
+    : "bg-white/60 text-fg-light";
 }
 
-function badgeClass(v: "purple" | "dark" | "neutral"): string {
-  switch (v) {
-    case "purple":
-      return "bg-white/60 text-fg-light";
-    case "dark":
-      return "bg-brand-500/30 text-brand-100";
-    case "neutral":
-      return "bg-selected-bg text-purple-deep";
-  }
+function titleClass(tone: "light" | "dark"): string {
+  return tone === "light" ? "text-white" : "text-fg-light";
 }
 
-function titleClass(v: "purple" | "dark" | "neutral"): string {
-  return v === "dark" ? "text-fg-dark" : "text-fg-light";
-}
-
-function subClass(v: "purple" | "dark" | "neutral"): string {
-  return v === "dark" ? "text-fg-dark-soft" : "text-fg-light-soft";
+function subClass(tone: "light" | "dark"): string {
+  return tone === "light" ? "text-white/80" : "text-fg-light/75";
 }

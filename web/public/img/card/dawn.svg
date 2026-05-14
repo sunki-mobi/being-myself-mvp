@@ -1,0 +1,22 @@
+<svg width="348" height="152" viewBox="0 0 348 152" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+  <filter id="shadow-card" x="0" y="0" width="348" height="152" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"></feColorMatrix>
+    <feOffset dy="4"></feOffset>
+    <feGaussianBlur stdDeviation="2"></feGaussianBlur>
+    <feComposite in2="hardAlpha" operator="out"></feComposite>
+    <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"></feColorMatrix>
+    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"></feBlend>
+    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"></feBlend>
+  </filter>
+    <linearGradient id="grad-card" x1="0.00%" y1="0.00%" x2="100.00%" y2="100.00%">
+      <stop offset="0.00%" stop-color="#EAF6F8"></stop>
+      <stop offset="55.00%" stop-color="#F2EDFB"></stop>
+      <stop offset="100.00%" stop-color="#F7E6F4"></stop>
+    </linearGradient>
+  </defs>
+  <g filter="url(#shadow-card)">
+    <path d="M49,4 L344,4 L344,99 A45,45 0 0 1 299,144 L4,144 L4,49 A45,45 0 0 1 49,4 Z" fill="url(#grad-card)"></path>
+  </g>
+</svg>

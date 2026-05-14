@@ -66,46 +66,62 @@ export function DoHubClient({
           </h1>
         </header>
 
-        <section className="flex-1 px-6 py-8 flex flex-col gap-5">
-          {/* 매일의 두 질문 */}
+        <section className="flex-1 px-6 py-8 flex flex-col gap-3">
+          {/* 매일의 두 질문 — lavender-purple (강조 보라, 흰 글씨) */}
           <Link
             href="/me/conversation"
             prefetch
-            className="block p-6 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all animate-fade-up-delay-1"
+            className="relative block no-select animate-fade-up-delay-1"
             style={{
-              backgroundImage:
-                "linear-gradient(135deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 60%, var(--grad-stop-3) 100%)",
+              display: "block",
+              width: "100%",
+              padding: "20px 32px 22px 28px",
+              backgroundImage: "url('/img/list/lavender-purple.svg')",
+              backgroundSize: "100% 100%",
+              backgroundRepeat: "no-repeat",
+              backgroundColor: "transparent",
+              minHeight: 132,
             }}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <span className="inline-block px-2 py-0.5 rounded-full bg-white/60 text-[10px] font-semibold text-fg-light tracking-wide mb-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <span className="inline-block px-2 py-0.5 rounded-full bg-white/30 backdrop-blur-sm text-[10px] font-semibold text-white tracking-wide mb-3">
                   # 매일 · 5분
                 </span>
-                <h2 className="text-lg font-bold text-fg-light mb-2 leading-snug">
+                <h2 className="text-lg font-bold text-white mb-2 leading-snug">
                   Being myself
                 </h2>
-                <p className="text-xs text-fg-light/70 leading-relaxed">
+                <p className="text-xs text-white/80 leading-relaxed">
                   {hasOngoing
                     ? `오늘의 두 질문 · ${answeredCount}개 답변 누적 · 진행 중`
                     : "오늘의 두 질문에 답하면 보고서가 쌓여요. 5분이면 충분해요."}
                 </p>
               </div>
-              <span aria-hidden className="text-2xl text-fg-light/70 mt-1">
+              <span aria-hidden className="text-2xl text-white/80 mt-1">
                 →
               </span>
             </div>
           </Link>
 
-          {/* 소명일기 */}
+          {/* 소명일기 — mint-deep (mint, dark 글씨) */}
           <Link
             href={hasTodayDiary ? "/me/diary" : "/me/diary/new"}
             prefetch
-            className="block p-6 rounded-3xl border border-border-line bg-surface-paper shadow-sm hover:shadow-md active:scale-[0.99] transition-all animate-fade-up-delay-2"
+            className="relative block no-select animate-fade-up-delay-2"
+            style={{
+              display: "block",
+              width: "100%",
+              padding: "20px 32px 22px 28px",
+              backgroundImage: "url('/img/list/mint-deep.svg')",
+              backgroundSize: "100% 100%",
+              backgroundRepeat: "no-repeat",
+              backgroundColor: "transparent",
+              minHeight: 132,
+            }}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div className="flex-1">
-                <span className="inline-block px-2 py-0.5 rounded-full bg-selected-bg text-[10px] font-semibold text-purple-deep tracking-wide mb-3">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <span className="inline-block px-2 py-0.5 rounded-full bg-white/60 text-[10px] font-semibold text-fg-light tracking-wide mb-3">
                   # 매일 저녁 · 5분
                 </span>
                 <h2 className="text-lg font-bold text-fg-light mb-2 leading-snug">
@@ -113,13 +129,13 @@ export function DoHubClient({
                     ? "오늘 일기 다시 보기"
                     : "소명일기 쓰기"}
                 </h2>
-                <p className="text-xs text-fg-light-soft leading-relaxed">
+                <p className="text-xs text-fg-light/80 leading-relaxed">
                   {hasTodayDiary
                     ? "오늘 작성한 일기가 있어요."
                     : "퇴근 보고를 붙여넣으면 AI가 오늘 한 일의 의미를 정리해줘요."}
                 </p>
               </div>
-              <span aria-hidden className="text-2xl text-fg-light-soft mt-1">
+              <span aria-hidden className="text-2xl text-fg-light/70 mt-1">
                 →
               </span>
             </div>

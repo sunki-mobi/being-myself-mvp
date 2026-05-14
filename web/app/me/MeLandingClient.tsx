@@ -114,16 +114,15 @@ export function MeLandingClient({
         </p>
 
         {/* ─── ContentCard list ─── */}
-        <section
-          className="flex-1 flex flex-col"
-          style={{ paddingLeft: 24, paddingRight: 24, gap: 20 }}
-        >
+        <section className="flex-1 px-6 py-8 flex flex-col gap-3">
           <ContentCard
             href="/me/do"
             tag="# 오늘"
             title="오늘 할 일"
             preview="Being myself · 소명일기"
             delayClass="animate-fade-up-delay-1"
+            bgImage="/img/list/mint-lavender.svg"
+            textTone="dark"
           />
           <ContentCard
             href="/me/reports"
@@ -131,6 +130,8 @@ export function MeLandingClient({
             title="내 보고서"
             preview="셀프인터뷰 보고서 · 4단계 누적 · 소명일기 누적"
             delayClass="animate-fade-up-delay-2"
+            bgImage="/img/list/paper.svg"
+            textTone="dark"
           />
         </section>
 
@@ -275,6 +276,8 @@ function ContentCard({
   title,
   preview,
   delayClass,
+  bgImage,
+  textTone = "dark",
   variant = "available",
 }: {
   href: string;
@@ -282,9 +285,12 @@ function ContentCard({
   title: string;
   preview: string;
   delayClass: string;
+  bgImage: string;
+  textTone?: "light" | "dark";
   variant?: "available" | "locked";
 }) {
   const isLocked = variant === "locked";
+  const isLight = textTone === "light";
   return (
     <Link
       href={isLocked ? "#" : href}
@@ -294,110 +300,56 @@ function ContentCard({
       onClick={isLocked ? (e) => e.preventDefault() : undefined}
       className={`relative block no-select ${delayClass}`}
       style={{
-        // PNG 외곽 transparent 영역만큼 텍스트를 안쪽으로 들이밀기 위해
-        // 좌우 패딩을 키움.
-        padding: "20px 32px",
-        // PNG의 자체 둥근 모서리와 transparent 외곽을 그대로 살림.
-        // borderRadius 없음 — PNG 모양이 카드 모양.
-        backgroundImage: isLocked
-          ? "url('/img/cards/locked.png')"
-          : "url('/img/cards/available.png')",
+        // /me/reports list 카드와 동일 padding/minHeight — 사용자가
+        // "맞는 디자인"으로 확정한 값.
+        // anchor 기본 inline → display:block + width:100% inline 강제.
+        display: "block",
+        width: "100%",
+        padding: "20px 32px 22px 28px",
+        backgroundImage: `url('${isLocked ? "/img/card/locked.svg" : bgImage}')`,
         backgroundSize: "100% 100%",
         backgroundRepeat: "no-repeat",
         backgroundColor: "transparent",
-        // filter:drop-shadow는 PNG의 실제 alpha 모양 따라 그림자 그림 →
-        // 사각형 box-shadow와 달리 transparent 모서리에 그림자 안 비침.
-        filter: "drop-shadow(0 12px 24px rgba(30,26,52,0.08))",
-        minHeight: 168,
+        minHeight: 132,
         opacity: isLocked ? 0.95 : 1,
         pointerEvents: isLocked ? "none" : "auto",
       }}
     >
-      <div
-        style={{
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-          gap: 8,
-        }}
-      >
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 min-w-0">
+          <span
+            className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold tracking-wide mb-2 ${
+              isLight
+                ? "bg-white/20 text-white backdrop-blur-sm"
+                : "bg-white/70 text-purple-deep"
+            }`}
+          >
+            {tag}
+          </span>
+          <h2
+            className={`text-lg font-extrabold leading-snug mb-1 tracking-[-0.015em] ${
+              isLight ? "text-white" : "text-fg-light"
+            }`}
+          >
+            {title}
+          </h2>
+          <p
+            className={`text-sm leading-relaxed line-clamp-2 ${
+              isLight ? "text-white/85" : "text-fg-light/85"
+            }`}
+          >
+            {preview}
+          </p>
+        </div>
         <span
-          style={{
-            alignSelf: "flex-start",
-            padding: "4px 10px",
-            borderRadius: 999,
-            background: "rgba(255,255,253,0.70)",
-            fontFamily: "var(--font-sans)",
-            fontWeight: 700,
-            fontSize: 11,
-            color: "#8948DD",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          {tag}
-        </span>
-        <h2
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontWeight: 800,
-            fontSize: 18,
-            color: "#1E1A34",
-            letterSpacing: "-0.015em",
-            lineHeight: 1.25,
-          }}
-        >
-          {title}
-        </h2>
-        <p
-          style={{
-            fontFamily: "var(--font-sans)",
-            fontWeight: 500,
-            fontSize: 13,
-            color: "rgba(30,26,52,0.85)",
-            lineHeight: 1.55,
-            marginTop: 8,
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
-          {preview}
-        </p>
-      </div>
-
-      {/* 시작하기 칩 — 우하단 */}
-      <span
-        style={{
-          position: "absolute",
-          right: 32,
-          bottom: 20,
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          fontFamily: "var(--font-sans)",
-          fontWeight: 700,
-          fontSize: 13,
-          color: "#1E1A34",
-          letterSpacing: "-0.01em",
-        }}
-      >
-        시작하기
-        <svg
-          width="14"
-          height="14"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
           aria-hidden
+          className={`text-2xl mt-1 ${
+            isLight ? "text-white/85" : "text-fg-light/70"
+          }`}
         >
-          <line x1="5" y1="12" x2="19" y2="12" />
-          <polyline points="12 5 19 12 12 19" />
-        </svg>
-      </span>
+          →
+        </span>
+      </div>
     </Link>
   );
 }

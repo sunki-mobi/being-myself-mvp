@@ -1,0 +1,21 @@
+<svg width="348" height="108" viewBox="0 0 348 108" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+  <filter id="shadow-list" x="0" y="0" width="348" height="108" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <feFlood flood-opacity="0" result="BackgroundImageFix"></feFlood>
+    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"></feColorMatrix>
+    <feOffset dy="4"></feOffset>
+    <feGaussianBlur stdDeviation="2"></feGaussianBlur>
+    <feComposite in2="hardAlpha" operator="out"></feComposite>
+    <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.25 0"></feColorMatrix>
+    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow"></feBlend>
+    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow" result="shape"></feBlend>
+  </filter>
+    <linearGradient id="grad-list" x1="0.00%" y1="0.00%" x2="100.00%" y2="100.00%">
+      <stop offset="0.00%" stop-color="#A8DCE8"></stop>
+      <stop offset="100.00%" stop-color="#80C5D6"></stop>
+    </linearGradient>
+  </defs>
+  <g filter="url(#shadow-list)">
+    <path d="M36,4 L344,4 L344,68 A32,32 0 0 1 312,100 L4,100 L4,36 A32,32 0 0 1 36,4 Z" fill="url(#grad-list)"></path>
+  </g>
+</svg>

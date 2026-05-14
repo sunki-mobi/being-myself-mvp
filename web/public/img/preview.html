@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>Diagonal SVG · Preview</title>
+<style>
+  body{
+    margin:0; padding:48px;
+    background:#F4F2F0;
+    font-family:"Pretendard Variable","Pretendard","Noto Sans KR",system-ui,sans-serif;
+    color:#1E1A34;
+  }
+  h1{ font-size:22px; font-weight:800; margin:0 0 6px; letter-spacing:-0.01em;}
+  p.lede{ margin:0 0 36px; font-size:13px; color:#55575C; max-width:680px; line-height:1.6;}
+  h2{ font-size:14px; font-weight:700; color:#6D2EC2; margin:40px 0 18px; letter-spacing:.04em; text-transform:uppercase;}
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(380px, 1fr));
+    gap:32px 28px;
+  }
+  .item{
+    display:flex; flex-direction:column; gap:10px;
+  }
+  .item img{ display:block; }
+  .item.card img{ width:348px; height:152px; }
+  .item.list img{ width:348px; height:108px; }
+  .label{
+    font-size:12px; font-weight:600; color:#1E1A34;
+    letter-spacing:.01em;
+  }
+  .file{ font-size:11px; color:#888; font-family:ui-monospace,monospace; }
+  .has-deco{
+    display:inline-block;
+    font-size:9px; font-weight:700;
+    background:rgba(137,72,221,.12); color:#6D2EC2;
+    padding:2px 6px; border-radius:4px;
+    margin-left:6px; letter-spacing:.04em;
+    vertical-align:middle;
+  }
+</style>
+</head>
+<body>
+  <h1>Diagonal SVG · 20 variants × 2 sizes</h1>
+  <p class="lede">왼쪽 위 + 오른쪽 아래만 둥글게 처리한 카드 셰입 라이브러리. 캔버스 카드에서 사용한 글로우/오브 효과를 그대로 재현했습니다 (decor 표시).<br/>
+  <b>card</b> 340×140 · radius 45 / <b>list</b> 340×96 · radius 32</p>
+
+  <h2>Card · 340 × 140</h2>
+  <div class="grid" id="grid-card"></div>
+
+  <h2>List · 340 × 96</h2>
+  <div class="grid" id="grid-list"></div>
+
+  <script>
+    const files = [
+      { name:'mint-lavender' },
+      { name:'lavender-purple', decor:'glow' },
+      { name:'purple',          decor:'orb' },
+      { name:'navy',            decor:'glow' },
+      { name:'mint-soft' },
+      { name:'paper' },
+      { name:'locked' },
+      { name:'done' },
+      { name:'lavender-solid' },
+      { name:'dusk',            decor:'orb' },
+      { name:'dawn' },
+      { name:'iridescent' },
+      { name:'mint-deep' },
+      { name:'split' },
+      { name:'plum',            decor:'orb' },
+      { name:'spotlight',       decor:'glow' },
+      { name:'cream' },
+      { name:'stripe-mint' },
+      { name:'stripe-purple' },
+      { name:'navy-glow',       decor:'built-in' },
+    ];
+
+    function render(targetId, size){
+      const grid = document.getElementById(targetId);
+      for (const f of files) {
+        const el = document.createElement('div');
+        el.className = `item ${size}`;
+        el.innerHTML = `
+          <img src="${size}/${f.name}.svg" alt="${f.name}"/>
+          <div class="label">${f.name.replace(/-/g, ' ')}${f.decor ? `<span class="has-deco">${f.decor}</span>` : ''}</div>
+          <div class="file">${size}/${f.name}.svg</div>
+        `;
+        grid.appendChild(el);
+      }
+    }
+    render('grid-card', 'card');
+    render('grid-list', 'list');
+  </script>
+</body>
+</html>
