@@ -62,7 +62,7 @@ export function DoHubClient({
             오늘 할 수 있는 일
           </p>
           <h1 className="mt-1 text-[22px] font-extrabold leading-tight tracking-[-0.02em] text-fg-light">
-            짧은 호흡 하나로 시작해요
+            오늘 무엇을 시작해 볼까요?
           </h1>
         </header>
 
@@ -76,7 +76,7 @@ export function DoHubClient({
               display: "block",
               width: "100%",
               padding: "20px 32px 22px 28px",
-              backgroundImage: "url('/img/list/lavender-purple.svg')",
+              backgroundImage: "url('/img/list/iridescent.svg')",
               backgroundSize: "100% 100%",
               backgroundRepeat: "no-repeat",
               backgroundColor: "transparent",
@@ -85,19 +85,19 @@ export function DoHubClient({
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0">
-                <span className="inline-block px-2 py-0.5 rounded-full bg-white/30 backdrop-blur-sm text-[10px] font-semibold text-white tracking-wide mb-3">
+                <span className="inline-block px-2 py-0.5 rounded-full bg-white/60 text-[10px] font-semibold text-purple-deep tracking-wide mb-3">
                   # 매일 · 5분
                 </span>
-                <h2 className="text-lg font-bold text-white mb-2 leading-snug">
+                <h2 className="text-lg font-bold text-fg-light mb-2 leading-snug">
                   Being myself
                 </h2>
-                <p className="text-xs text-white/80 leading-relaxed">
+                <p className="text-xs text-fg-light/80 leading-relaxed">
                   {hasOngoing
                     ? `오늘의 두 질문 · ${answeredCount}개 답변 누적 · 진행 중`
                     : "오늘의 두 질문에 답하면 보고서가 쌓여요. 5분이면 충분해요."}
                 </p>
               </div>
-              <span aria-hidden className="text-2xl text-white/80 mt-1">
+              <span aria-hidden className="text-2xl text-fg-light/70 mt-1">
                 →
               </span>
             </div>
@@ -112,7 +112,7 @@ export function DoHubClient({
               display: "block",
               width: "100%",
               padding: "20px 32px 22px 28px",
-              backgroundImage: "url('/img/list/mint-deep.svg')",
+              backgroundImage: "url('/img/list/dawn.svg')",
               backgroundSize: "100% 100%",
               backgroundRepeat: "no-repeat",
               backgroundColor: "transparent",

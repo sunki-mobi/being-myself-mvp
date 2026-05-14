@@ -83,10 +83,14 @@ export async function POST(request: Request) {
   const { userName, history, baselineId, mode } = body;
   const userTurns = history.filter((m) => m.role === "user-answer").length;
 
-  // baselineId가 있으면 그 페르소나 baseline 사용, 없으면 방선기(skpan) 기본.
-  const resolvedBaselineId =
-    baselineId && isBaselineId(baselineId) ? baselineId : "skpan";
-  const baselineSummary = summarizeBaseline(getBaseline(resolvedBaselineId));
+  // baselineId 명시 시에만 페르소나 baseline 컨텍스트 주입 (demo 트랙용).
+  // 미지정 시(me 트랙) baseline 컨텍스트 없이 진행 — 다른 사용자(시드 skpan)
+  // 데이터가 LLM 응답에 새어 나가는 risk 차단. 본인 baseline 컨텍스트 주입은
+  // 추후 작업으로 분리 (server-side에서 user_id로 baseline_report 조회).
+  const baselineSummary =
+    baselineId && isBaselineId(baselineId)
+      ? summarizeBaseline(getBaseline(baselineId))
+      : undefined;
 
   const messages: ModelMessage[] = [
     {

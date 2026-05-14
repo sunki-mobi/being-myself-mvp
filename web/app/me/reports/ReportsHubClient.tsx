@@ -39,7 +39,7 @@ export function ReportsHubClient({
       key: "long-term",
       badge: "# 누적",
       title: "지금까지의 모습",
-      sub: "현상 · 본질 · 가치 · 존재 4단계",
+      sub: "쌓인 답변에서 자라난 큰 그림",
       href: "/me/long-term",
       bgImage: "/img/list/navy.svg",
       textTone: "light",
@@ -47,9 +47,11 @@ export function ReportsHubClient({
     {
       key: "daily",
       badge: "# 매일 · 디제스트",
-      title: "매일 두 질문 보고서",
+      title: "오늘의 답변",
       sub:
-        qaCount > 0 ? `${qaCount}개 답변 누적` : "오늘 답변하면 디제스트가 만들어져요.",
+        qaCount > 0
+          ? `${qaCount}개 답변 · 오늘의 정리 보기`
+          : "오늘 두 질문에 답하면 정리해드려요",
       href: "/me/report",
       bgImage: "/img/list/dawn.svg",
       textTone: "dark",
@@ -63,7 +65,7 @@ export function ReportsHubClient({
           ? `${diaryCount}개 일기 누적`
           : "오늘부터 일기 쓰면 여기에 쌓여요.",
       href: "/me/diary",
-      bgImage: "/img/list/mint-deep.svg",
+      bgImage: "/img/list/cream.svg",
       textTone: "dark",
     },
   ];

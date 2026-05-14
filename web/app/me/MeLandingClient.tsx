@@ -118,7 +118,7 @@ export function MeLandingClient({
           <ContentCard
             href="/me/do"
             tag="# 오늘"
-            title="오늘 할 일"
+            title="오늘의 시간"
             preview="Being myself · 소명일기"
             delayClass="animate-fade-up-delay-1"
             bgImage="/img/list/mint-lavender.svg"

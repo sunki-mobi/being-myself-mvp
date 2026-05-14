@@ -55,7 +55,7 @@ export function ReportStage({
   homePath: string;
 }) {
   const router = useRouter();
-  const { state, hydrated, reset } = useConversation(conversationOptions);
+  const { state, hydrated } = useConversation(conversationOptions);
 
   const [digest, setDigest] = useState<Digest | null>(null);
   const [digestLoading, setDigestLoading] = useState(false);
@@ -254,51 +254,9 @@ export function ReportStage({
           {hasToday && digest ? (
             <DigestCards digest={digest} baseline={baseline} />
           ) : null}
-
-          {fullReportPath ? (
-            <article
-              className="mt-2 p-5 rounded-3xl bg-surface-dark text-fg-dark cursor-pointer hover:opacity-95 active:scale-[0.99] transition-all animate-fade-up-delay-3"
-              onClick={() => router.push(fullReportPath)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  router.push(fullReportPath);
-                }
-              }}
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1">
-                  <p className="text-[10px] font-semibold text-brand-100 mb-1">
-                    전체 셀프인터뷰 보고서
-                  </p>
-                  <p className="text-base font-bold leading-snug mb-1">
-                    {baseline.parts.length}개 Part 풀 보고서 보기
-                  </p>
-                  <p className="text-xs text-fg-dark-soft leading-relaxed">
-                    좋아하는 / 잘하는 / 가치 있는 것 — 처음 셀프인터뷰의 모든 답변
-                  </p>
-                </div>
-                <span aria-hidden className="text-2xl text-fg-dark-soft mt-1">
-                  →
-                </span>
-              </div>
-            </article>
-          ) : null}
         </section>
 
         <section className="px-6 pb-10 flex flex-col gap-3">
-          {hasToday ? (
-            <PrimaryButton
-              onClick={() => {
-                reset();
-                router.push(newSessionPath);
-              }}
-            >
-              새로운 두 질문 시작하기
-            </PrimaryButton>
-          ) : null}
           <SecondaryButton onClick={() => router.push(homePath)}>
             홈으로
           </SecondaryButton>
@@ -347,7 +305,7 @@ function DigestCards({
           <p className="text-xs font-semibold text-fg-light-soft px-1">
             기존 보고서와 닿는 부분
           </p>
-          {digest.connections.map((c, idx) => (
+          {digest.connections.slice(0, 2).map((c, idx) => (
             <ConnectionCard key={idx} connection={c} baseline={baseline} />
           ))}
         </div>

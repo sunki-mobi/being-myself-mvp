@@ -90,10 +90,19 @@ export async function POST(request: Request) {
 
   const { userName, todayAnswers, baselineId } = body;
 
-  // 페르소나 baseline 또는 방선기(skpan) 기본
-  const resolvedBaselineId =
-    baselineId && isBaselineId(baselineId) ? baselineId : "skpan";
-  const baseline = getBaseline(resolvedBaselineId);
+  // baselineId 명시 시에만 페르소나 baseline로 connections 매칭 (demo 트랙용).
+  // 미지정 시(me 트랙) 시드 skpan baseline이 LLM에 노출되는 risk 차단 위해
+  // connections 없이 단순 fallback 반환. 본인 baseline 매칭은 추후 fix.
+  if (!baselineId || !isBaselineId(baselineId)) {
+    return Response.json({
+      summary: `오늘 답해주신 ${todayAnswers.length}개 답변, 잘 담아둘게요.`,
+      connections: [],
+      tension: "",
+      nextThread: "내일은 어떤 한 순간이 마음에 남는지 함께 살펴봐요.",
+    });
+  }
+
+  const baseline = getBaseline(baselineId);
 
   try {
     const { output } = await generateText({

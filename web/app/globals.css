@@ -264,7 +264,8 @@ button,
   .animate-fade-up,
   .animate-fade-up-delay-1,
   .animate-fade-up-delay-2,
-  .animate-fade-up-delay-3 {
+  .animate-fade-up-delay-3,
+  .animate-fade-up-delay-4 {
     animation: none;
   }
 }
@@ -283,4 +284,8 @@ button,
 
 .animate-fade-up-delay-3 {
   animation: fade-up 0.45s ease-out 0.24s both;
+}
+
+.animate-fade-up-delay-4 {
+  animation: fade-up 0.45s ease-out 0.32s both;
 }
