@@ -294,7 +294,9 @@ function ContentCard({
       onClick={isLocked ? (e) => e.preventDefault() : undefined}
       className={`relative block no-select ${delayClass}`}
       style={{
-        padding: 20,
+        // PNG 외곽 transparent 영역만큼 텍스트를 안쪽으로 들이밀기 위해
+        // 좌우 패딩을 키움.
+        padding: "20px 32px",
         // PNG의 자체 둥근 모서리와 transparent 외곽을 그대로 살림.
         // borderRadius 없음 — PNG 모양이 카드 모양.
         backgroundImage: isLocked
@@ -368,7 +370,7 @@ function ContentCard({
       <span
         style={{
           position: "absolute",
-          right: 20,
+          right: 32,
           bottom: 20,
           display: "inline-flex",
           alignItems: "center",
