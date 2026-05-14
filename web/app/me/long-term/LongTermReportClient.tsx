@@ -23,10 +23,16 @@ export function LongTermReportClient({
   report,
   pendingAnswers,
   isStale,
+  isPreview = false,
 }: {
   report: LongTermReport;
   pendingAnswers: number;
   isStale: boolean;
+  /**
+   * true면 hero 아래 "이후 공개 예정" 안내 + 하단 재합성/stale 배너 숨김.
+   * 11명 오픈 직전 단계 — 본인 누적 합성 활성화 전 양식 미리보기.
+   */
+  isPreview?: boolean;
 }) {
   const router = useRouter();
   const [refreshing, setRefreshing] = useState(false);
@@ -109,6 +115,21 @@ export function LongTermReportClient({
           </p>
         </header>
 
+        {/* Preview 안내 — 본인 누적 합성 활성화 전 양식 미리보기 */}
+        {isPreview ? (
+          <section className="px-6 pt-5 -mb-3">
+            <div className="p-4 rounded-[12px] bg-selected-bg border border-brand-200 animate-fade-up">
+              <p className="text-xs font-semibold text-purple-deep mb-1.5 tracking-wide">
+                🔒 이후 공개 예정
+              </p>
+              <p className="text-sm text-fg-light leading-relaxed">
+                지금은 양식 미리보기를 보여드려요. 답변이 충분히 쌓이면 본인의
+                4단계 보고서로 채워질 거예요.
+              </p>
+            </div>
+          </section>
+        ) : null}
+
         {/* 4 layer */}
         <section className="flex-1 px-6 py-8 flex flex-col gap-5">
           {report.layers.map((card, idx) => (
@@ -116,8 +137,8 @@ export function LongTermReportClient({
           ))}
         </section>
 
-        {/* Stale 배너 — 누적 답변이 합성 시점보다 많이 늘었을 때 */}
-        {isStale && !refreshing ? (
+        {/* Stale 배너 — preview 모드일 땐 숨김 */}
+        {!isPreview && isStale && !refreshing ? (
           <section className="px-6 pb-2">
             <div className="p-4 rounded-[12px] bg-selected-bg border border-brand-200">
               <p className="text-sm text-fg-light leading-relaxed">
@@ -129,7 +150,7 @@ export function LongTermReportClient({
           </section>
         ) : null}
 
-        {error ? (
+        {!isPreview && error ? (
           <section className="px-6 pb-2">
             <p className="text-sm text-record bg-record/5 px-3 py-2 rounded-[8px]">
               {error}
@@ -138,22 +159,24 @@ export function LongTermReportClient({
         ) : null}
 
         <section className="px-6 pb-10 flex flex-col gap-3">
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className={`w-full px-6 py-3 rounded-full text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-              isStale
-                ? "bg-brand-500 hover:bg-brand-600 text-white"
-                : "bg-surface-card text-fg-light hover:bg-brand-50"
-            }`}
-          >
-            {refreshing
-              ? "다시 만들고 있어요…"
-              : isStale
-                ? `새 답변 ${pendingAnswers}개 반영해서 새로 만들기`
-                : "보고서 새로 만들기"}
-          </button>
+          {!isPreview ? (
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className={`w-full px-6 py-3 rounded-full text-sm font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                isStale
+                  ? "bg-brand-500 hover:bg-brand-600 text-white"
+                  : "bg-surface-card text-fg-light hover:bg-brand-50"
+              }`}
+            >
+              {refreshing
+                ? "다시 만들고 있어요…"
+                : isStale
+                  ? `새 답변 ${pendingAnswers}개 반영해서 새로 만들기`
+                  : "보고서 새로 만들기"}
+            </button>
+          ) : null}
           <button
             type="button"
             onClick={() => router.push("/me")}
