@@ -296,11 +296,12 @@ function ContentCard({
       style={{
         padding: 20,
         borderRadius: 16,
-        backgroundImage: isLocked
-          ? "url('/img/cards/locked.png')"
-          : "url('/img/cards/available.png')",
-        backgroundSize: "100% 100%",
-        backgroundRepeat: "no-repeat",
+        // PNG는 자체 transparent 모서리가 있어 layered background로 처리:
+        //  1) 위 레이어: PNG (그라데이션 + 광원 디테일)
+        //  2) 아래 레이어: 같은 결의 그라데이션 fallback — transparent 영역을 메움
+        background: isLocked
+          ? "url('/img/cards/locked.png') center / 100% 100% no-repeat, linear-gradient(135deg, #C9C7CC 0%, #ACAAB0 100%)"
+          : "url('/img/cards/available.png') center / 100% 100% no-repeat, linear-gradient(135deg, #C6EDF5 0%, #E5ADFF 100%)",
         boxShadow: "0 12px 24px rgba(30,26,52,0.08)",
         minHeight: 168,
         opacity: isLocked ? 0.95 : 1,
