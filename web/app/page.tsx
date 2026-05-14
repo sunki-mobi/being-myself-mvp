@@ -15,8 +15,20 @@ import Link from "next/link";
  */
 export default function LandingPage() {
   return (
-    <main className="min-h-screen w-full flex justify-center bg-surface-dark lg:bg-gradient-to-b lg:from-surface-dark lg:to-[#1a1235]">
-      <div className="w-full max-w-md flex flex-col gradient-hero text-fg-dark lg:rounded-3xl lg:my-8 lg:min-h-[820px] lg:shadow-2xl lg:shadow-black/40 relative">
+    <main
+      className="min-h-screen w-full flex justify-center bg-[#050210]"
+      style={{
+        backgroundImage:
+          "radial-gradient(ellipse 80% 60% at 50% 0%, #1a1235 0%, #050210 70%)",
+      }}
+    >
+      <div
+        className="w-full max-w-md flex flex-col gradient-hero text-fg-dark lg:rounded-3xl lg:my-8 lg:min-h-[820px] relative overflow-hidden"
+        style={{
+          boxShadow:
+            "0 30px 60px -20px rgba(140, 82, 255, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.04)",
+        }}
+      >
         {/* 보라 그라데이션 ambient — hero 톤 강화 */}
         <div
           aria-hidden
