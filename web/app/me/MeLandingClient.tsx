@@ -299,8 +299,8 @@ function ContentCard({
         backgroundImage: isLocked
           ? "url('/img/cards/locked.png')"
           : "url('/img/cards/available.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
+        backgroundSize: "100% 100%",
+        backgroundRepeat: "no-repeat",
         boxShadow: "0 12px 24px rgba(30,26,52,0.08)",
         minHeight: 168,
         opacity: isLocked ? 0.95 : 1,
