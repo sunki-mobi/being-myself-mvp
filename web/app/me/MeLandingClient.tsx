@@ -275,42 +275,46 @@ function ContentCard({
   title,
   preview,
   delayClass,
+  variant = "available",
 }: {
   href: string;
   tag: string;
   title: string;
   preview: string;
   delayClass: string;
+  variant?: "available" | "locked";
 }) {
+  const isLocked = variant === "locked";
   return (
     <Link
-      href={href}
-      prefetch
+      href={isLocked ? "#" : href}
+      prefetch={!isLocked}
+      aria-disabled={isLocked || undefined}
+      tabIndex={isLocked ? -1 : undefined}
+      onClick={isLocked ? (e) => e.preventDefault() : undefined}
       className={`relative block overflow-hidden no-select ${delayClass}`}
       style={{
         padding: 20,
         borderRadius: 16,
-        background: "linear-gradient(135deg, #C6EDF5 0%, #E5ADFF 100%)",
+        backgroundImage: isLocked
+          ? "url('/img/cards/locked.png')"
+          : "url('/img/cards/available.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
         boxShadow: "0 12px 24px rgba(30,26,52,0.08)",
+        minHeight: 168,
+        opacity: isLocked ? 0.95 : 1,
+        pointerEvents: isLocked ? "none" : "auto",
       }}
     >
-      {/* 우하단 광원 */}
-      <span
-        aria-hidden
+      <div
         style={{
-          position: "absolute",
-          right: -20,
-          bottom: -20,
-          width: 200,
-          height: 200,
-          borderRadius: "50%",
-          background:
-            "radial-gradient(circle, rgba(137,72,221,0.35) 0%, transparent 70%)",
-          pointerEvents: "none",
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
         }}
-      />
-
-      <div style={{ position: "relative", display: "flex", flexDirection: "column", gap: 8 }}>
+      >
         <span
           style={{
             alignSelf: "flex-start",
