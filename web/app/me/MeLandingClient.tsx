@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useConversation } from "@/lib/conversation";
 
 /**
@@ -21,7 +21,6 @@ export function MeLandingClient({
   displayName: string;
   email: string;
 }) {
-  const router = useRouter();
   const { state, hydrated, login } = useConversation();
 
   useEffect(() => {
@@ -84,20 +83,13 @@ export function MeLandingClient({
 
         <section className="flex-1 px-6 py-8 flex flex-col gap-5">
           {/* 오늘 할 일 */}
-          <article
-            className="p-6 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer animate-fade-up-delay-1"
+          <Link
+            href="/me/do"
+            prefetch
+            className="block p-6 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all animate-fade-up-delay-1"
             style={{
               backgroundImage:
                 "linear-gradient(135deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 60%, var(--grad-stop-3) 100%)",
-            }}
-            onClick={() => router.push("/me/do")}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                router.push("/me/do");
-              }
             }}
           >
             <div className="flex items-start justify-between gap-4">
@@ -116,20 +108,13 @@ export function MeLandingClient({
                 →
               </span>
             </div>
-          </article>
+          </Link>
 
           {/* 내 보고서 */}
-          <article
-            className="p-6 rounded-3xl bg-surface-dark text-fg-dark shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer animate-fade-up-delay-2"
-            onClick={() => router.push("/me/reports")}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                router.push("/me/reports");
-              }
-            }}
+          <Link
+            href="/me/reports"
+            prefetch
+            className="block p-6 rounded-3xl bg-surface-dark text-fg-dark shadow-sm hover:shadow-md active:scale-[0.99] transition-all animate-fade-up-delay-2"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
@@ -147,7 +132,7 @@ export function MeLandingClient({
                 →
               </span>
             </div>
-          </article>
+          </Link>
 
           <p className="text-center text-xs text-fg-light-soft mt-auto pt-6">
             {email ? `${email} · ` : ""}© 2026 MOBINITY. All Rights Reserved.

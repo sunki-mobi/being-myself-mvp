@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 /**
  * /me — baseline이 아직 없는 사용자에게 보이는 진입 카드.
@@ -16,8 +16,6 @@ export function BaselineSelectClient({
   displayName: string;
   email: string;
 }) {
-  const router = useRouter();
-
   return (
     <main className="min-h-screen w-full flex justify-center bg-[#f6f4fb] lg:bg-gradient-to-b lg:from-[#f6f4fb] lg:to-[#ece8f5]">
       <div className="w-full max-w-md flex flex-col bg-surface-light text-fg-light lg:rounded-3xl lg:my-8 lg:min-h-[820px] lg:shadow-xl lg:shadow-brand-200/30">
@@ -71,20 +69,13 @@ export function BaselineSelectClient({
         {/* Body — 두 카드 */}
         <section className="flex-1 px-6 py-8 flex flex-col gap-5">
           {/* 카드 1 — 처음 시작 */}
-          <article
-            className="p-6 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer animate-fade-up-delay-1"
+          <Link
+            href="/me/baseline/prepare/1"
+            prefetch
+            className="block p-6 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all animate-fade-up-delay-1"
             style={{
               backgroundImage:
                 "linear-gradient(135deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 60%, var(--grad-stop-3) 100%)",
-            }}
-            onClick={() => router.push("/me/baseline/prepare/1")}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                router.push("/me/baseline/prepare/1");
-              }
             }}
           >
             <div className="flex items-start justify-between gap-4">
@@ -105,20 +96,13 @@ export function BaselineSelectClient({
                 →
               </span>
             </div>
-          </article>
+          </Link>
 
           {/* 카드 2 — Import */}
-          <article
-            className="p-6 rounded-3xl bg-surface-dark text-fg-dark shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer animate-fade-up-delay-2"
-            onClick={() => router.push("/me/baseline/import")}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                router.push("/me/baseline/import");
-              }
-            }}
+          <Link
+            href="/me/baseline/import"
+            prefetch
+            className="block p-6 rounded-3xl bg-surface-dark text-fg-dark shadow-sm hover:shadow-md active:scale-[0.99] transition-all animate-fade-up-delay-2"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
@@ -138,7 +122,7 @@ export function BaselineSelectClient({
                 →
               </span>
             </div>
-          </article>
+          </Link>
 
           <p className="text-center text-xs text-fg-light-soft mt-auto pt-6">
             {email ? `${email} · ` : ""}© 2026 MOBINITY. All Rights Reserved.

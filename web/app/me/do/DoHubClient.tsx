@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useConversation } from "@/lib/conversation";
 
@@ -67,20 +68,13 @@ export function DoHubClient({
 
         <section className="flex-1 px-6 py-8 flex flex-col gap-5">
           {/* 매일의 두 질문 */}
-          <article
-            className="p-6 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer animate-fade-up-delay-1"
+          <Link
+            href="/me/conversation"
+            prefetch
+            className="block p-6 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all animate-fade-up-delay-1"
             style={{
               backgroundImage:
                 "linear-gradient(135deg, var(--grad-stop-1) 0%, var(--grad-stop-2) 60%, var(--grad-stop-3) 100%)",
-            }}
-            onClick={() => router.push("/me/conversation")}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                router.push("/me/conversation");
-              }
             }}
           >
             <div className="flex items-start justify-between gap-4">
@@ -101,22 +95,13 @@ export function DoHubClient({
                 →
               </span>
             </div>
-          </article>
+          </Link>
 
           {/* 소명일기 */}
-          <article
-            className="p-6 rounded-3xl border border-border-line bg-surface-paper shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer animate-fade-up-delay-2"
-            onClick={() =>
-              router.push(hasTodayDiary ? "/me/diary" : "/me/diary/new")
-            }
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                router.push(hasTodayDiary ? "/me/diary" : "/me/diary/new");
-              }
-            }}
+          <Link
+            href={hasTodayDiary ? "/me/diary" : "/me/diary/new"}
+            prefetch
+            className="block p-6 rounded-3xl border border-border-line bg-surface-paper shadow-sm hover:shadow-md active:scale-[0.99] transition-all animate-fade-up-delay-2"
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1">
@@ -138,7 +123,7 @@ export function DoHubClient({
                 →
               </span>
             </div>
-          </article>
+          </Link>
         </section>
       </div>
     </main>

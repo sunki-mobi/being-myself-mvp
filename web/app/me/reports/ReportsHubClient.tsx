@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 /**
@@ -95,11 +96,13 @@ export function ReportsHubClient({
 
         <section className="flex-1 px-6 py-8 flex flex-col gap-4">
           {cards.map((c, idx) => (
-            <article
+            <Link
               key={c.key}
+              href={c.href}
+              prefetch
               className={`${variantClass(
                 c.variant,
-              )} p-5 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all cursor-pointer animate-fade-up-delay-${
+              )} block p-5 rounded-2xl shadow-sm hover:shadow-md active:scale-[0.99] transition-all animate-fade-up-delay-${
                 Math.min(idx, 3) + 1
               }`}
               style={
@@ -110,15 +113,6 @@ export function ReportsHubClient({
                     }
                   : undefined
               }
-              onClick={() => router.push(c.href)}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  router.push(c.href);
-                }
-              }}
             >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
@@ -140,7 +134,7 @@ export function ReportsHubClient({
                   →
                 </span>
               </div>
-            </article>
+            </Link>
           ))}
         </section>
       </div>
