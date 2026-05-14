@@ -47,7 +47,9 @@ const responseSchema = z.object({
     .describe("다음에 던질 질문 한 문장. 자연스러운 대화체."),
   isComplete: z
     .boolean()
-    .describe("자연스러운 마무리 지점이면 true. 보통 5턴 이후."),
+    .describe(
+      "두 번째 사용자 답변 직후이면 true (이 때 question은 빈 문자열). 첫 답변까지는 false. 3턴 이상으로 늘리지 말 것.",
+    ),
   suggestedAnswers: z
     .array(z.string())
     .max(2)
@@ -118,6 +120,17 @@ export async function POST(request: Request) {
       messages,
       output: Output.object({ schema: responseSchema }),
     });
+
+    // Server-side hard cap — 두 번째 답변 받았으면 무조건 마무리.
+    // LLM이 prompt를 무시해도 "매일 두 질문" 약속 강제.
+    if (userTurns >= 2) {
+      return Response.json({
+        ...output,
+        isComplete: true,
+        question: "",
+        suggestedAnswers: [],
+      });
+    }
 
     return Response.json(output);
   } catch (err) {
