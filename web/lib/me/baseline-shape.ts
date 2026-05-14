@@ -34,3 +34,34 @@ export type BaselineShape = {
   headline: string;
   parts: BaselinePartShape[];
 };
+
+/**
+ * BaselineShape를 LLM prompt 컨텍스트용 텍스트 요약으로 변환.
+ *
+ * 본인 baseline_report.report(BaselineShape) → headline + parts(키워드·인사이트)
+ * 한 줄 list. /api/me/chat·/api/me/digest 등에서 prompt에 주입할 때 사용.
+ */
+export function summarizeBaselineShape(shape: BaselineShape): string {
+  const lines: string[] = [
+    `한 줄 요약: ${shape.headline}`,
+    "",
+    "[3개 Part]",
+  ];
+  for (const part of shape.parts) {
+    lines.push(`- ${part.partTitle}`);
+    if (part.keywords && part.keywords.length > 0) {
+      lines.push(`  키워드: ${part.keywords.join(", ")}`);
+    }
+    if (part.insight) {
+      lines.push(`  인사이트: ${part.insight}`);
+    }
+    if (part.items && part.items.length > 0) {
+      const itemTitles = part.items
+        .map((it) => it.title)
+        .filter(Boolean)
+        .join(" / ");
+      if (itemTitles) lines.push(`  세부: ${itemTitles}`);
+    }
+  }
+  return lines.join("\n");
+}

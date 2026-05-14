@@ -57,12 +57,24 @@ export const PACEMAKER_SYSTEM_PROMPT = `당신은 "Being Myself"의 AI 페이스
 
 [세션 길이 — 매우 중요]
 **한 세션은 정확히 2개의 질문**입니다. 사용자가 두 번째 질문에 답하면 isComplete: true.
-
-- 첫 질문: 1단계(현상) 또는 2단계(본질) 정도로 가볍게 들어갑니다. 해결 중심 — "오늘 가장 마음에 남은 한 순간이 있다면 무엇이었나요?"처럼 "잘 됐던 / 살아있게 느껴졌던" 쪽으로 시선이 가도록.
-- 두 번째 질문: 첫 답변에서 한 발 더 들어가는 심화 질문. 사용자가 쓴 표현 한 조각을 그대로 인용해서 "그 [표현]이라는 게 어떤 의미인가요?" / "그 안에서 무엇이 그렇게 느껴지게 했을까요?" 식으로 잇습니다. ("왜?"가 아니라 "무엇/어떻게"로).
-- 두 번째 답변에 대한 reaction은 마무리 톤("오늘 나눈 이야기, 보고서에 잘 담아둘게요" 같은). 그리고 question은 빈 문자열로, isComplete를 true로.
-
+두 번째 답변에 대한 reaction은 마무리 톤("오늘 나눈 이야기, 보고서에 잘 담아둘게요" 같은). 그리고 question은 빈 문자열로, isComplete를 true로.
 5턴 이상으로 절대 늘리지 마세요. 짧고 깊은 두 호흡. "매일 5분, 오늘은 여기까지" 가 이 서비스의 약속입니다.
+
+[두 질문의 역할 — 각자 다른 임무]
+컨텍스트로 사용자의 baseline 보고서·최근 답변·소명일기가 주어집니다(있을 때만). Q1과 Q2는 **서로 다른 역할**을 갖습니다. 같은 결에 머무르지 마세요.
+
+- **Q1 (이어 가는 질문 — 누적 데이터 활용)**:
+  baseline 보고서 / 최근 답변 / 일기 중 **한 항목을 자연스럽게 환기해서 한 발 더 깊이** 들어가는 질문. 사용자가 이미 말한 표현을 그대로 한 조각 인용하면 좋습니다.
+  예: 최근 답변에 "몰입 순간"이 자주 나왔다면 → "그 '몰입'이라는 결이 오늘 어떤 모양으로 나타났을까요?"
+  baseline 인사이트에 "환경을 정돈하는 일에서 안정"이 있었다면 → "최근에 그 '정돈되는 감각'을 가장 짙게 느낀 한 순간이 있다면 언제였어요?"
+  컨텍스트가 비어 있거나 부족하면 일반 1단계(현상) 톤 — "오늘 마음에 가장 오래 남은 한 순간이 있다면 무엇이었나요?".
+
+- **Q2 (새로운 결을 환기하는 질문 — 다른 영역으로)**:
+  Q1과 **다른 영역으로 시선을 옮기는** 질문. baseline의 다른 Part 키워드, 누적 답변에 아직 안 나온 결, 일기에 살짝 나왔지만 깊이 다루지 않은 부분.
+  예: Q1이 "잘하는 것" 영역이었다면 Q2는 "가치 있는 것" 또는 "좋아하는 것"으로 — "오늘 하루 중, 작더라도 '아 이건 나답다' 싶었던 순간은 어디였어요?".
+  Q1과 같은 키워드·표현을 또 쓰지 마세요. 사용자 세계의 다른 한 구석을 가볍게 두드리는 톤.
+
+**중요 — 데이터가 비어 있을 때**: baseline·답변·일기 어느 것도 컨텍스트로 안 주어지면 두 질문 모두 일반 톤(1단계 현상 → 2단계 본질)으로 가세요. 억지로 개인화하지 말 것.
 
 [금지]
 - "강점은 ~입니다" "당신은 ~형 사람입니다" 같은 단정.
@@ -84,14 +96,21 @@ export const PACEMAKER_SYSTEM_PROMPT = `당신은 "Being Myself"의 AI 페이스
 `;
 
 /**
- * 매 턴마다 컨텍스트로 들어가는 사용자 정보 헤더 + baseline 요약.
- * baselineSummary가 있으면 자연스러운 깊이감을 위해 시스템 컨텍스트로 주입.
- * mode="demo"이면 suggestedAnswers를 항상 3개 생성하라고 명시.
+ * 매 턴마다 컨텍스트로 들어가는 사용자 정보 헤더 + 데이터 컨텍스트.
+ *
+ * 본인 데이터(baseline·최근 답변·일기)는 server-side에서 user.id로 조회 후
+ * 여기에 텍스트로 주입. demo 트랙은 페르소나 baselineSummary만.
+ * 셋 다 비어 있으면 LLM은 일반 톤으로 fallback (개인화 강제 X).
  */
 export function buildContextHeader(args: {
   userName: string;
   turn: number;
+  /** baseline 보고서 요약 — 본인(BaselineShape) 또는 페르소나(BaselineReport) */
   baselineSummary?: string;
+  /** 최근 누적 답변 텍스트 list (Q1 깊이 자료) */
+  recentAnswers?: string;
+  /** 최근 소명일기 entry 텍스트 list (Q1 깊이 자료) */
+  recentDiary?: string;
   mode?: "me" | "demo";
 }): string {
   const head = `[현재 세션]
@@ -110,10 +129,21 @@ export function buildContextHeader(args: {
 [me 모드 안내]
 사용자 본인의 자유 답변에 집중. suggestedAnswers는 빈 배열로.`;
 
-  if (!args.baselineSummary) return head + modeNote;
+  let out = head + modeNote;
 
-  return `${head}${modeNote}
+  if (args.baselineSummary) {
+    out += `\n\n[사용자 baseline 보고서 — Q1 깊이 들어가는 자료]\n${args.baselineSummary}`;
+  }
+  if (args.recentAnswers) {
+    out += `\n\n${args.recentAnswers}`;
+  }
+  if (args.recentDiary) {
+    out += `\n\n${args.recentDiary}`;
+  }
 
-[사용자 baseline 보고서 — 자연스러울 때만 환기·교차에 활용]
-${args.baselineSummary}`;
+  if (!args.baselineSummary && !args.recentAnswers && !args.recentDiary) {
+    out += `\n\n[컨텍스트 비어 있음] 누적 데이터 없음. Q1·Q2 모두 일반 톤(1단계 현상 → 2단계 본질)으로.`;
+  }
+
+  return out;
 }

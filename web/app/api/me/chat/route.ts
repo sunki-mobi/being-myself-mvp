@@ -8,8 +8,63 @@ import {
 import { classifyGeminiError } from "@/lib/ai/error-helpers";
 import { summarizeBaseline } from "@/lib/me/baseline-report";
 import { getBaseline, isBaselineId } from "@/lib/me/baselines";
+import {
+  type BaselineShape,
+  summarizeBaselineShape,
+} from "@/lib/me/baseline-shape";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
+
+/**
+ * 최근 누적 qa_pair → Q1 깊이 자료 컨텍스트 텍스트. 최대 8개.
+ */
+function formatRecentAnswers(
+  rows: Array<{
+    question_text: string;
+    answer_text: string;
+    created_at: string;
+  }>,
+): string | undefined {
+  if (rows.length === 0) return undefined;
+  const lines: string[] = [
+    "[최근 누적 답변 — 최신순. Q1에서 한 표현을 자연스럽게 환기 가능]",
+  ];
+  for (const r of rows.slice(0, 8)) {
+    const kstDate = new Date(r.created_at).toLocaleDateString("ko-KR", {
+      timeZone: "Asia/Seoul",
+    });
+    lines.push(`[${kstDate}] Q: ${r.question_text}`);
+    lines.push(`         A: ${r.answer_text}`);
+  }
+  return lines.join("\n");
+}
+
+/**
+ * 최근 소명일기 entry → Q1 깊이 자료 컨텍스트 텍스트. 최대 4개.
+ */
+function formatRecentDiary(
+  rows: Array<{
+    entry_date: string;
+    answer: string | null;
+    free_note: string | null;
+  }>,
+): string | undefined {
+  const entries = rows
+    .filter((r) => r.answer || r.free_note)
+    .slice(0, 4);
+  if (entries.length === 0) return undefined;
+  const lines: string[] = [
+    "[최근 소명일기 — 최신순. Q1에서 자연스럽게 환기 가능]",
+  ];
+  for (const r of entries) {
+    const parts: string[] = [];
+    if (r.answer) parts.push(`답: ${r.answer.slice(0, 200)}`);
+    if (r.free_note) parts.push(`자유: ${r.free_note.slice(0, 200)}`);
+    lines.push(`[${r.entry_date}] ${parts.join(" / ")}`);
+  }
+  return lines.join("\n");
+}
 
 const requestSchema = z.object({
   userName: z.string().min(1).max(40),
@@ -83,14 +138,55 @@ export async function POST(request: Request) {
   const { userName, history, baselineId, mode } = body;
   const userTurns = history.filter((m) => m.role === "user-answer").length;
 
-  // baselineId 명시 시에만 페르소나 baseline 컨텍스트 주입 (demo 트랙용).
-  // 미지정 시(me 트랙) baseline 컨텍스트 없이 진행 — 다른 사용자(시드 skpan)
-  // 데이터가 LLM 응답에 새어 나가는 risk 차단. 본인 baseline 컨텍스트 주입은
-  // 추후 작업으로 분리 (server-side에서 user_id로 baseline_report 조회).
-  const baselineSummary =
-    baselineId && isBaselineId(baselineId)
-      ? summarizeBaseline(getBaseline(baselineId))
-      : undefined;
+  let baselineSummary: string | undefined;
+  let recentAnswersContext: string | undefined;
+  let recentDiaryContext: string | undefined;
+
+  if (baselineId && isBaselineId(baselineId)) {
+    // demo 트랙 — 페르소나 baseline (게스트도 호출 가능, 본인 데이터 조회 X)
+    baselineSummary = summarizeBaseline(getBaseline(baselineId));
+  } else {
+    // me 트랙 — 인증 사용자라면 본인 baseline·답변·일기 조회해 컨텍스트로.
+    // 셋 다 비어 있으면 LLM은 일반 톤으로 fallback (pacemaker prompt에 명시).
+    const supabase = await createSupabaseServerClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      const [baselineRes, qaRes, diaryRes] = await Promise.all([
+        supabase
+          .from("baseline_report")
+          .select("report")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("qa_pair")
+          .select("question_text, answer_text, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(10),
+        supabase
+          .from("somyeong_entries")
+          .select("entry_date, answer, free_note")
+          .eq("user_id", user.id)
+          .order("entry_date", { ascending: false })
+          .limit(5),
+      ]);
+
+      if (baselineRes.data?.report) {
+        baselineSummary = summarizeBaselineShape(
+          baselineRes.data.report as BaselineShape,
+        );
+      }
+      if (qaRes.data) {
+        recentAnswersContext = formatRecentAnswers(qaRes.data);
+      }
+      if (diaryRes.data) {
+        recentDiaryContext = formatRecentDiary(diaryRes.data);
+      }
+    }
+  }
 
   const messages: ModelMessage[] = [
     {
@@ -99,6 +195,8 @@ export async function POST(request: Request) {
         userName,
         turn: userTurns,
         baselineSummary,
+        recentAnswers: recentAnswersContext,
+        recentDiary: recentDiaryContext,
         mode,
       }),
     },
