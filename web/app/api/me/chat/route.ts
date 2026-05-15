@@ -223,18 +223,26 @@ export async function POST(request: Request) {
       output: Output.object({ schema: responseSchema }),
     });
 
-    // Server-side hard cap — 두 번째 답변 받았으면 무조건 마무리.
-    // LLM이 prompt를 무시해도 "매일 두 질문" 약속 강제.
+    // Server-side hard caps:
+    //  1. 두 번째 답변 받았으면 무조건 마무리 ("매일 두 질문" 약속 강제)
+    //  2. me 트랙(mode != "demo")은 suggestedAnswers 항상 빈 배열 — LLM이
+    //     가이드 무시하고 채워도 빠른 답변 칩 노출 차단.
+    const isDemoMode = mode === "demo";
+    const finalOutput = {
+      ...output,
+      suggestedAnswers: isDemoMode ? output.suggestedAnswers : [],
+    };
+
     if (userTurns >= 2) {
       return Response.json({
-        ...output,
+        ...finalOutput,
         isComplete: true,
         question: "",
         suggestedAnswers: [],
       });
     }
 
-    return Response.json(output);
+    return Response.json(finalOutput);
   } catch (err) {
     console.error("[/api/me/chat] gemini error", err);
     const { status, body: errBody } = classifyGeminiError(err);
