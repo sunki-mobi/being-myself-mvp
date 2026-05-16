@@ -66,7 +66,11 @@ export function useSpeechRecognition(options: { lang?: string } = {}) {
     recognition.lang = lang;
 
     recognition.onresult = (event: unknown) => {
-      // event.results is SpeechRecognitionResultList — index by resultIndex onwards
+      // event.results is SpeechRecognitionResultList.
+      // 일부 모바일 브라우저(Samsung Internet 등)는 매 onresult에서 누적된
+      // results 전체를 다시 보내며 resultIndex를 0으로 리셋하는 케이스가 있음.
+      // 그래서 prev + chunk 누적 방식은 같은 final이 여러 번 더해져 중복됨.
+      // 대신 매번 results 전체를 처음부터 훑어 final 전체 텍스트로 set.
       const ev = event as {
         resultIndex: number;
         results: {
@@ -77,20 +81,18 @@ export function useSpeechRecognition(options: { lang?: string } = {}) {
           };
         };
       };
+      let allFinal = "";
       let interim = "";
-      let finalChunk = "";
-      for (let i = ev.resultIndex; i < ev.results.length; i++) {
+      for (let i = 0; i < ev.results.length; i++) {
         const result = ev.results[i];
         const transcript = result[0]?.transcript ?? "";
         if (result.isFinal) {
-          finalChunk += transcript;
+          allFinal += transcript;
         } else {
           interim += transcript;
         }
       }
-      if (finalChunk) {
-        setFinalTranscript((prev) => prev + finalChunk);
-      }
+      setFinalTranscript(allFinal);
       setInterimTranscript(interim);
     };
 
