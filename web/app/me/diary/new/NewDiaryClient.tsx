@@ -59,7 +59,13 @@ type Phase =
 
 /* ───────── Component ───────── */
 
-export function NewDiaryClient({ existing }: { existing: Existing }) {
+export function NewDiaryClient({
+  existing,
+  hasGoal,
+}: {
+  existing: Existing;
+  hasGoal: boolean;
+}) {
   const router = useRouter();
 
   // existing이 있어도 이미 ai_question·answer 등 다 있으면 바로 writing부터
@@ -167,6 +173,7 @@ export function NewDiaryClient({ existing }: { existing: Existing }) {
             busy={phase === "synthesizing"}
             error={error}
             onSubmit={handleSynthesize}
+            hasGoal={hasGoal}
           />
         ) : phase === "review" && flow ? (
           <ReviewStep flow={flow} onNext={goReviewToChoose} />
@@ -255,12 +262,14 @@ function PasteStep({
   busy,
   error,
   onSubmit,
+  hasGoal,
 }: {
   text: string;
   setText: (v: string) => void;
   busy: boolean;
   error: string | null;
   onSubmit: () => void;
+  hasGoal: boolean;
 }) {
   return (
     <section className="flex-1 px-6 pt-6 pb-6 flex flex-col animate-fade-up-delay-1">
@@ -274,6 +283,25 @@ function PasteStep({
         <br />
         AI가 OKR과 회사 미션에 닿은 일들로 의미를 정리해줘요.
       </p>
+
+      {!hasGoal ? (
+        <a
+          href="/me/settings/goal"
+          className="mt-5 flex items-center justify-between gap-3 px-4 py-3 rounded-[12px] bg-selected-bg border border-brand-200 hover:bg-brand-50 active:scale-[0.99] transition-all no-select"
+        >
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] font-semibold text-purple-deep tracking-wide mb-0.5">
+              💡 내 목표 등록하면 더 정확해져요
+            </p>
+            <p className="text-xs text-fg-light-soft leading-relaxed">
+              OKR·KPI·분기 목표를 적어두면 AI가 퇴근 보고와 비교해드려요.
+            </p>
+          </div>
+          <span aria-hidden className="text-lg text-purple-deep">
+            →
+          </span>
+        </a>
+      ) : null}
 
       <textarea
         value={text}

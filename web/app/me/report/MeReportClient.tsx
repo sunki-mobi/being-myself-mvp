@@ -35,6 +35,22 @@ export function MeReportClient({
   const router = useRouter();
   const hasToday = today != null && today.pairs.length > 0;
 
+  // ConversationStage에서 답변 완료 후 ?fresh=1로 진입 시 한 번 server refresh.
+  // qa_pair POST가 fire-and-forget이라 redirect 시점에 DB write가 약간 늦을
+  // 수 있어 page server component가 빈 결과로 렌더되는 경우 대비.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("fresh") !== "1") return;
+    params.delete("fresh");
+    const newUrl =
+      window.location.pathname +
+      (params.toString() ? `?${params.toString()}` : "");
+    window.history.replaceState({}, "", newUrl);
+    const t = setTimeout(() => router.refresh(), 1200);
+    return () => clearTimeout(t);
+  }, [router]);
+
   // 오늘 답변 중 answer_card 캐시 miss된 pair → client에서 fetch + DB 저장.
   // 다음 진입 시 server-side 조회에서 캐시 hit.
   const todayPairsForCards = useMemo(

@@ -31,7 +31,7 @@ export default function MeConversationPage() {
       conversationOptions={conversationOptions}
       userNameDisplay={state.userName}
       onBack={() => router.push("/me")}
-      completePath="/me/report"
+      completePath="/me/report?fresh=1"
     />
   );
 }

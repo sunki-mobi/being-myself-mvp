@@ -123,8 +123,24 @@ export async function POST(request: Request) {
     return Response.json(errBody, { status });
   }
 
-  // 3) Cache write — qaPairId + 인증 사용자 + supabase 셋업된 경우만
+  // 3) Cache write — qaPairId가 본인 qa_pair인지 application-level 검증 후 upsert.
+  // RLS만으로도 격리되지만, 클라이언트가 다른 user의 qaPairId 조작해 본인
+  // user_id로 answer_card row를 만드는 케이스(데이터 정합성 깨짐)를 방어.
   if (supabase && userId && body.qaPairId) {
+    const { data: ownerCheck } = await supabase
+      .from("qa_pair")
+      .select("id")
+      .eq("id", body.qaPairId)
+      .maybeSingle();
+
+    if (!ownerCheck) {
+      // 본인 qa_pair 아니거나 존재 안 함 — cache write skip, LLM 결과만 반환
+      console.warn(
+        "[/api/me/answer-card] qaPairId not owned by user, skip cache write",
+      );
+      return Response.json(card);
+    }
+
     const { error: upsertErr } = await supabase
       .from("answer_card")
       .upsert(
@@ -135,7 +151,6 @@ export async function POST(request: Request) {
         },
         { onConflict: "qa_pair_id" },
       );
-    // 캐시 쓰기 실패는 critical 아님 — LLM 결과는 이미 클라이언트에 반환됨
     if (upsertErr) {
       console.error("[/api/me/answer-card] cache write failed", upsertErr);
     }

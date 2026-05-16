@@ -18,17 +18,29 @@ export default async function DiaryNewPage() {
   if (!user) redirect("/auth/sign-in?next=/me/diary/new");
 
   const today = new Date().toISOString().slice(0, 10);
-  const { data: existing } = await supabase
-    .from("somyeong_entries")
-    .select(
-      "evening_report_text, contribution_flow, ai_question, ai_question_source, answer, free_note",
-    )
-    .eq("user_id", user.id)
-    .eq("entry_date", today)
-    .maybeSingle();
+  const [existingRes, goalRes] = await Promise.all([
+    supabase
+      .from("somyeong_entries")
+      .select(
+        "evening_report_text, contribution_flow, ai_question, ai_question_source, answer, free_note",
+      )
+      .eq("user_id", user.id)
+      .eq("entry_date", today)
+      .maybeSingle(),
+    supabase
+      .from("somyeong_user_okr")
+      .select("id")
+      .eq("user_id", user.id)
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const existing = existingRes.data;
+  const hasGoal = Boolean(goalRes.data);
 
   return (
     <NewDiaryClient
+      hasGoal={hasGoal}
       existing={
         existing
           ? {
