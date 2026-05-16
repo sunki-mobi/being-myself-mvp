@@ -38,6 +38,18 @@ function getRecognitionCtor(): SpeechRecognitionConstructor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+/**
+ * Samsung Internet은 continuous mode를 다르게 처리해 final results가 매 발화
+ * 후 results에 누적되며 같은 텍스트가 여러 번 결합되는 버그가 있음. 또 일정
+ * 시간 후 자동 stop. 정상 동작 안 하므로 isSupported=false로 fallback해 사용자
+ * 텍스트 입력만 쓰게. (V2에서 MediaRecorder + Gemini로 baseline interview 전체
+ * 전환 예정.)
+ */
+function isBrokenSpeechBrowser(): boolean {
+  if (typeof navigator === "undefined") return false;
+  return /SamsungBrowser/i.test(navigator.userAgent);
+}
+
 export function useSpeechRecognition(options: { lang?: string } = {}) {
   const lang = options.lang ?? "ko-KR";
 
@@ -55,6 +67,11 @@ export function useSpeechRecognition(options: { lang?: string } = {}) {
   useEffect(() => {
     const Ctor = getRecognitionCtor();
     if (!Ctor) {
+      setIsSupported(false);
+      return;
+    }
+    if (isBrokenSpeechBrowser()) {
+      // 알려진 호환성 이슈 (예: Samsung Internet) — 텍스트 입력만 노출.
       setIsSupported(false);
       return;
     }
