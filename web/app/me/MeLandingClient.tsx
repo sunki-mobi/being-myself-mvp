@@ -148,7 +148,7 @@ export function MeLandingClient({
             href="/me/reports"
             tag="# 내 모습"
             title="내 보고서"
-            preview="셀프인터뷰 보고서 · 4단계 누적 · 소명일기 누적"
+            preview="셀프인터뷰 · 4단계 · 일기 모음"
             delayClass="animate-fade-up-delay-2"
             bgImage="/img/list/paper.svg"
             textTone="dark"

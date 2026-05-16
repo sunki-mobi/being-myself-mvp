@@ -123,9 +123,10 @@ export async function POST(request: Request) {
     return Response.json(errBody, { status });
   }
 
-  // 3) Cache write — qaPairId가 본인 qa_pair인지 application-level 검증 후 upsert.
-  // RLS만으로도 격리되지만, 클라이언트가 다른 user의 qaPairId 조작해 본인
-  // user_id로 answer_card row를 만드는 케이스(데이터 정합성 깨짐)를 방어.
+  // 3) Cache write — qaPairId가 본인 qa_pair인지 best-effort 확인 + upsert.
+  // RLS가 진짜 격리(다른 user qa_pair에 본인 user_id로 row 만들 수 없음)이라
+  // ownership check는 warn 로그용만. check fail해도 upsert는 시도 — RLS가
+  // 진짜 보호. (V1 — 11명 내부 사용자, 데이터 정합성 audit Risky는 차후.)
   if (supabase && userId && body.qaPairId) {
     const { data: ownerCheck } = await supabase
       .from("qa_pair")
@@ -134,11 +135,9 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (!ownerCheck) {
-      // 본인 qa_pair 아니거나 존재 안 함 — cache write skip, LLM 결과만 반환
       console.warn(
-        "[/api/me/answer-card] qaPairId not owned by user, skip cache write",
+        "[/api/me/answer-card] qa_pair ownership check returned no row — RLS reject 또는 row 없음. upsert는 시도.",
       );
-      return Response.json(card);
     }
 
     const { error: upsertErr } = await supabase
