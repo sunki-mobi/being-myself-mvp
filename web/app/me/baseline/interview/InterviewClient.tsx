@@ -9,7 +9,7 @@ import {
   type ChoiceBranch,
   type InterviewAnswers,
 } from "@/lib/me/baseline-interview-questions";
-import { useSpeechRecognition } from "@/lib/me/use-speech-recognition";
+import { useAudioRecorder } from "@/lib/me/use-audio-recorder";
 
 /**
  * 셀프인터뷰 진행 — 3 Q-block × (객관식 → 음성) = 6 step + 완료.
@@ -229,40 +229,75 @@ function VoiceStep({
   const block = BASELINE_QUESTIONS.find((b) => b.id === blockId)!;
   const config = block.voice[branch];
 
-  const {
-    isSupported,
-    isListening,
-    interimTranscript,
-    finalTranscript,
-    error,
-    start,
-    stop,
-    reset,
-  } = useSpeechRecognition({ lang: "ko-KR" });
-
+  // V2: MediaRecorder + Gemini transcribe로 모든 브라우저 통일.
+  // Web Speech API는 모바일 Chrome·Samsung Internet에서 중복·자동 종료 버그.
+  const recorder = useAudioRecorder();
   const [text, setText] = useState("");
+  const [transcribing, setTranscribing] = useState(false);
+  const [transcribeError, setTranscribeError] = useState<string | null>(null);
 
-  // 녹음 종료 후 finalTranscript이 비어있지 않으면 textarea에 append.
-  // append 후 reset() → finalTranscript이 빈 문자열로 돌아오므로 재진입은
-  // 일어나지 않음. 사용자 편집 여부와 무관하게 매 녹음 세션의 결과가 누적됨.
+  // 녹음 종료(blob 도착) → /api/me/transcribe → text append
   useEffect(() => {
-    if (!isListening && finalTranscript) {
-      setText((prev) => (prev ? `${prev} ${finalTranscript}`.trim() : finalTranscript));
-      reset();
-    }
-  }, [finalTranscript, isListening, reset]);
+    if (!recorder.blob) return;
+    const blob = recorder.blob;
+    const mimeType = recorder.mimeType ?? "audio/webm";
 
-  function toggle() {
-    if (isListening) {
-      stop();
+    setTranscribing(true);
+    setTranscribeError(null);
+
+    const fileName = mimeType.includes("mp4")
+      ? "answer.mp4"
+      : mimeType.includes("ogg")
+        ? "answer.ogg"
+        : "answer.webm";
+    const fd = new FormData();
+    fd.append("audio", blob, fileName);
+
+    let cancelled = false;
+    fetch("/api/me/transcribe", { method: "POST", body: fd })
+      .then(async (res) => {
+        if (!res.ok) {
+          const detail = await res.json().catch(() => ({}));
+          throw new Error(detail?.error ?? `요청 실패 (${res.status})`);
+        }
+        return res.json();
+      })
+      .then((data: { text: string }) => {
+        if (cancelled) return;
+        setText((prev) => (prev.trim() ? `${prev.trim()} ${data.text}` : data.text));
+        recorder.reset();
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setTranscribeError(
+          err instanceof Error ? err.message : "변환에 실패했어요.",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setTranscribing(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recorder.blob]);
+
+  const recState = recorder.state;
+  const isRecording = recState === "recording";
+  const isRequesting = recState === "requesting";
+  const busy = transcribing || isRecording || isRequesting || saving;
+  const errorMsg = transcribeError ?? recorder.error;
+
+  function handleMicClick() {
+    if (isRecording) {
+      recorder.stop();
     } else {
-      start();
+      setTranscribeError(null);
+      if (recState === "error") recorder.reset();
+      void recorder.start();
     }
   }
-
-  const liveTranscript = isListening
-    ? (finalTranscript + interimTranscript).trim()
-    : "";
 
   function handleSubmit() {
     onSubmit(text);
@@ -284,78 +319,79 @@ function VoiceStep({
 
       {/* Mic */}
       <div className="mt-8 flex flex-col items-center">
-        {isSupported ? (
-          <button
-            type="button"
-            onClick={toggle}
-            disabled={saving}
-            className={`w-20 h-20 rounded-full flex items-center justify-center transition-all no-select ${
-              isListening
-                ? "bg-[#f44a4a] text-white shadow-lg animate-pulse"
-                : "bg-brand-500 text-white hover:bg-brand-600 active:scale-95"
-            } disabled:opacity-50 disabled:cursor-not-allowed`}
-            aria-label={isListening ? "녹음 중지" : "녹음 시작"}
-          >
-            {isListening ? (
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
-                <rect x="6" y="6" width="12" height="12" rx="2" />
-              </svg>
-            ) : (
-              <svg
-                width="28"
-                height="28"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
-                <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
-                <path d="M19 10v2a7 7 0 01-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" />
-                <line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
-            )}
-          </button>
+        <button
+          type="button"
+          onClick={handleMicClick}
+          disabled={saving || transcribing || isRequesting}
+          className={`w-20 h-20 rounded-full flex items-center justify-center transition-all no-select ${
+            isRecording
+              ? "bg-[#f44a4a] text-white shadow-lg animate-pulse"
+              : "bg-brand-500 text-white hover:bg-brand-600 active:scale-95"
+          } disabled:opacity-50 disabled:cursor-not-allowed`}
+          aria-label={isRecording ? "녹음 중지" : "녹음 시작"}
+        >
+          {isRecording ? (
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+              <rect x="6" y="6" width="12" height="12" rx="2" />
+            </svg>
+          ) : (
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z" />
+              <path d="M19 10v2a7 7 0 01-14 0v-2" />
+              <line x1="12" y1="19" x2="12" y2="23" />
+              <line x1="8" y1="23" x2="16" y2="23" />
+            </svg>
+          )}
+        </button>
+
+        {isRecording ? (
+          <p className="mt-3 text-xs text-fg-light-soft animate-pulse">
+            녹음 중 — 정지를 누르면 텍스트로 변환돼요
+          </p>
+        ) : transcribing ? (
+          <p className="mt-3 text-xs text-fg-light-soft animate-pulse">
+            음성을 텍스트로 옮기는 중…
+          </p>
+        ) : isRequesting ? (
+          <p className="mt-3 text-xs text-fg-light-soft">
+            마이크 권한을 요청 중…
+          </p>
         ) : (
-          <p className="text-xs text-fg-light-muted">
-            이 브라우저는 음성 인식을 지원하지 않아요. 아래에 글로 적어주세요.
+          <p className="mt-3 text-[11px] text-fg-light-muted">
+            마이크로 답하거나 아래에 직접 작성하세요
           </p>
         )}
 
-        {isListening && (
-          <p className="mt-3 text-xs text-fg-light-soft animate-pulse">
-            듣고 있어요…
-          </p>
-        )}
-        {error && (
+        {errorMsg && (
           <p className="mt-3 text-xs text-record bg-record/5 px-3 py-2 rounded-[8px] max-w-xs text-center">
-            {error}
+            {errorMsg}
           </p>
         )}
       </div>
-
-      {/* 실시간 transcription preview (녹음 중일 때만) */}
-      {liveTranscript && (
-        <div className="mt-4 px-4 py-3 rounded-[12px] bg-[#f6f4fb] text-sm text-fg-light-soft italic max-h-24 overflow-y-auto">
-          {liveTranscript}
-        </div>
-      )}
 
       {/* Editable textarea */}
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder={isSupported ? "마이크로 답하거나 직접 작성하세요" : "여기에 답을 적어주세요"}
-        className="mt-4 w-full min-h-[120px] px-4 py-3 rounded-[12px] border border-border-line bg-surface-paper text-fg-light text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-brand-500/40"
+        disabled={busy}
+        placeholder="마이크로 답하거나 직접 작성하세요"
+        className="mt-4 w-full min-h-[120px] px-4 py-3 rounded-[12px] border border-border-line bg-surface-paper text-fg-light text-sm leading-relaxed resize-none focus:outline-none focus:ring-2 focus:ring-brand-500/40 disabled:opacity-60"
       />
 
       <div className="mt-6">
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!text.trim() || saving || isListening}
+          disabled={!text.trim() || busy}
           className="w-full py-4 rounded-full bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white text-base font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed no-select"
         >
           {saving ? "저장 중…" : "다음"}
