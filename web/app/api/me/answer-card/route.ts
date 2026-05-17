@@ -85,23 +85,38 @@ export async function POST(request: Request) {
   let supabase: Awaited<ReturnType<typeof createSupabaseServerClient>> | null =
     null;
   let userId: string | null = null;
+  const debug: Record<string, unknown> = {
+    cacheEligible,
+    qaPairId: body.qaPairId ?? null,
+    hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  };
 
   if (cacheEligible) {
     supabase = await createSupabaseServerClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
+    debug.userId = user?.id ?? null;
+    debug.userPresent = !!user;
     if (user) {
       userId = user.id;
-      const { data: cached } = await supabase
+      const { data: cached, error: lookupErr } = await supabase
         .from("answer_card")
         .select("card")
         .eq("qa_pair_id", body.qaPairId!)
         .maybeSingle();
+      debug.cacheHit = !!cached?.card;
+      if (lookupErr) debug.lookupErr = lookupErr.message;
+      console.log("[/api/me/answer-card] cache lookup", debug);
       if (cached?.card) {
         return Response.json(cached.card);
       }
+    } else {
+      console.warn("[/api/me/answer-card] no user (auth.getUser null)", debug);
     }
+  } else {
+    console.warn("[/api/me/answer-card] cache not eligible", debug);
   }
 
   // 2) Cache miss → LLM 호출
@@ -140,7 +155,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { error: upsertErr } = await supabase
+    const { error: upsertErr, data: upsertData } = await supabase
       .from("answer_card")
       .upsert(
         {
@@ -149,9 +164,29 @@ export async function POST(request: Request) {
           card,
         },
         { onConflict: "qa_pair_id" },
-      );
+      )
+      .select("qa_pair_id");
     if (upsertErr) {
-      console.error("[/api/me/answer-card] cache write failed", upsertErr);
+      console.error(
+        "[/api/me/answer-card] cache write FAILED",
+        JSON.stringify({
+          message: upsertErr.message,
+          code: upsertErr.code,
+          details: upsertErr.details,
+          hint: upsertErr.hint,
+          userId,
+          qaPairId: body.qaPairId,
+          ownerCheckPresent: !!ownerCheck,
+        }),
+      );
+    } else {
+      console.log(
+        "[/api/me/answer-card] cache write OK",
+        JSON.stringify({
+          qaPairId: body.qaPairId,
+          rowsReturned: upsertData?.length ?? 0,
+        }),
+      );
     }
   }
 
