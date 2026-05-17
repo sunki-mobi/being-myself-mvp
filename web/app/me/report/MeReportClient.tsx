@@ -51,27 +51,53 @@ export function MeReportClient({
     return () => clearTimeout(t);
   }, [router]);
 
-  // 오늘 답변 중 answer_card 캐시 miss된 pair → client에서 fetch + DB 저장.
-  // 다음 진입 시 server-side 조회에서 캐시 hit.
-  const todayPairsForCards = useMemo(
-    () =>
-      (today?.pairs ?? [])
-        .filter((p) => !p.answerCard)
-        .map((p) => ({
-          question: p.question,
-          answer: p.answer,
-          key: p.qaPairId,
-          qaPairId: p.qaPairId,
-        })),
-    [today],
+  // 이전 답변 — 오늘 답변 안 했으면 자동 펼침, 답변 했으면 접힘
+  const [historyExpanded, setHistoryExpanded] = useState(!hasToday);
+  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
+
+  // 펼친 history 날짜 list
+  const expandedHistoryEntries = useMemo(
+    () => history.filter((d) => expandedDays.has(d.date)),
+    [history, expandedDays],
   );
+
+  // answer_card 캐시 miss된 pair → client에서 fetch + DB 저장.
+  // today는 항상, history는 사용자가 펼친 날짜만 fetch (LLM 비용 절약).
+  const pairsForCards = useMemo(() => {
+    const list: {
+      question: string;
+      answer: string;
+      key: string;
+      qaPairId: string;
+    }[] = [];
+    const entries: DayEntry[] = [];
+    if (today) entries.push(today);
+    entries.push(...expandedHistoryEntries);
+    for (const day of entries) {
+      for (const p of day.pairs) {
+        if (!p.answerCard) {
+          list.push({
+            question: p.question,
+            answer: p.answer,
+            key: p.qaPairId,
+            qaPairId: p.qaPairId,
+          });
+        }
+      }
+    }
+    return list;
+  }, [today, expandedHistoryEntries]);
+
   const { cards: clientCards, loading: cardLoading } = useAnswerCards(
-    todayPairsForCards,
+    pairsForCards,
     true,
   );
 
   function resolveCard(pair: DayPair): AnswerCard | undefined {
     return pair.answerCard ?? clientCards[pair.qaPairId];
+  }
+  function resolveLoading(pair: DayPair): boolean {
+    return !pair.answerCard && Boolean(cardLoading[pair.qaPairId]);
   }
 
   // 오늘 digest 캐시 hit이면 그대로, miss이면 client에서 fetch
@@ -111,10 +137,6 @@ export function MeReportClient({
       )
       .finally(() => setDigestLoading(false));
   }, [hasToday, today, baseline.userName]);
-
-  // 이전 답변 — 오늘 답변 안 했으면 자동 펼침, 답변 했으면 접힘 (사용자가 토글)
-  const [historyExpanded, setHistoryExpanded] = useState(!hasToday);
-  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
 
   function toggleDay(date: string) {
     setExpandedDays((prev) => {
@@ -212,6 +234,8 @@ export function MeReportClient({
                       expanded={expandedDays.has(entry.date)}
                       onToggle={() => toggleDay(entry.date)}
                       baseline={baseline}
+                      resolveCard={resolveCard}
+                      resolveLoading={resolveLoading}
                     />
                   ))}
                 </div>
@@ -296,11 +320,15 @@ function HistoryDayRow({
   expanded,
   onToggle,
   baseline,
+  resolveCard,
+  resolveLoading,
 }: {
   entry: DayEntry;
   expanded: boolean;
   onToggle: () => void;
   baseline: BaselineReport;
+  resolveCard: (pair: DayPair) => AnswerCard | undefined;
+  resolveLoading: (pair: DayPair) => boolean;
 }) {
   return (
     <article className="rounded-[12px] border border-border-line bg-surface-paper overflow-hidden">
@@ -334,8 +362,8 @@ function HistoryDayRow({
               key={pair.qaPairId}
               index={idx + 1}
               pair={{ question: pair.question, answer: pair.answer }}
-              card={pair.answerCard ?? undefined}
-              loading={false}
+              card={resolveCard(pair)}
+              loading={resolveLoading(pair)}
             />
           ))}
           {entry.digest ? (
