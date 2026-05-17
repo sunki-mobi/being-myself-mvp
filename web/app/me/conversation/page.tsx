@@ -1,37 +1,33 @@
-"use client";
-
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useConversation } from "@/lib/conversation";
-import { ConversationStage } from "@/components/ConversationStage";
+import { redirect } from "next/navigation";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { ConversationPageClient } from "./ConversationPageClient";
 
 /**
- * /me/conversation — 방선기 본인 시연 트랙의 conversation 흐름.
- * baseline은 server route default (skpan).
+ * /me/conversation — 본인 매일 두 질문 트랙.
+ *
+ * server에서 인증 + KST 오늘 qa_pair count 조회. LocalStorage state와 mismatch
+ * 시(예: DB 비웠는데 LocalStorage가 isComplete=true) client mount 시 자동
+ * reset해서 새 세션 시작 가능.
  */
-export default function MeConversationPage() {
-  const router = useRouter();
-  // /me는 로그인 사용자 트랙 — proxy가 이미 인증 가드. persistTurns로 매 turn DB 누적.
-  const conversationOptions = { namespace: "me" as const, persistTurns: true };
-  const { state, hydrated } = useConversation(conversationOptions);
+export default async function MeConversationPage() {
+  const supabase = await createSupabaseServerClient();
 
-  // 사용자 이름이 없으면 /me로 보냄
-  useEffect(() => {
-    if (hydrated && !state.userName) {
-      router.replace("/me");
-    }
-  }, [hydrated, state.userName, router]);
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/sign-in?next=/me/conversation");
 
-  if (!hydrated || !state.userName) {
-    return <main className="min-h-screen w-full bg-[#f6f4fb]" />;
-  }
+  const todayKst = new Date().toLocaleDateString("en-CA", {
+    timeZone: "Asia/Seoul",
+  });
+  const startKst = `${todayKst}T00:00:00+09:00`;
+  const endKst = `${todayKst}T23:59:59.999+09:00`;
+  const { count } = await supabase
+    .from("qa_pair")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .gte("created_at", startKst)
+    .lte("created_at", endKst);
 
-  return (
-    <ConversationStage
-      conversationOptions={conversationOptions}
-      userNameDisplay={state.userName}
-      onBack={() => router.push("/me")}
-      completePath="/me/report?fresh=1"
-    />
-  );
+  return <ConversationPageClient todayQaCount={count ?? 0} />;
 }
