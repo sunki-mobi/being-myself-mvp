@@ -233,7 +233,11 @@ export async function POST(request: Request) {
 
   try {
     const { output } = await generateText({
-      model: google("gemini-2.5-flash-lite"),
+      // chat은 Q1/Q2 역할 분리·baseline 환기 등 prompt 디테일을 정확히
+      // 따라야 사용자 가치(개인화 질문)가 살아나서 Flash로 업그레이드.
+      // 비용은 3배지만 11명 규모에서 월 ~₩540 수준이라 무시 가능.
+      // 다른 호출(digest·answer-card·transcribe·diary)은 flash-lite 유지.
+      model: google("gemini-2.5-flash"),
       system: PACEMAKER_SYSTEM_PROMPT,
       messages,
       output: Output.object({ schema: responseSchema }),
