@@ -185,6 +185,22 @@ export async function POST(request: Request) {
       if (diaryRes.data) {
         recentDiaryContext = formatRecentDiary(diaryRes.data);
       }
+
+      // 디버그 — Vercel logs에서 컨텍스트 주입 상태 확인용
+      console.log("[chat] context for user:", {
+        userId: user.id,
+        turn: userTurns,
+        baselineLoaded: !!baselineSummary,
+        baselineLen: baselineSummary?.length ?? 0,
+        recentAnswersCount: qaRes.data?.length ?? 0,
+        recentAnswersLen: recentAnswersContext?.length ?? 0,
+        recentDiaryCount: diaryRes.data?.length ?? 0,
+        recentDiaryLen: recentDiaryContext?.length ?? 0,
+      });
+    } else {
+      console.log("[chat] no user — me track called without auth", {
+        userTurns,
+      });
     }
   }
 
