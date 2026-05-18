@@ -39,9 +39,9 @@ export default async function DiaryHistoryPage() {
       <div className="w-full max-w-md flex flex-col bg-surface-paper text-fg-light lg:rounded-3xl lg:my-8 lg:min-h-[820px] lg:shadow-xl lg:shadow-brand-200/30">
         <header className="px-6 pt-10 pb-2 animate-fade-up">
           <Link
-            href="/me/reports"
+            href="/me"
             className="inline-flex w-9 h-9 -ml-2 items-center justify-center rounded-md text-fg-light hover:bg-surface-card transition-colors no-select"
-            aria-label="보고서로"
+            aria-label="홈으로"
           >
             <svg
               width="18"
@@ -102,7 +102,7 @@ function EmptyState() {
       <div className="text-4xl">📔</div>
       <h2 className="text-lg font-bold">아직 일기가 없어요</h2>
       <p className="text-sm text-fg-light-soft leading-relaxed max-w-xs">
-        오늘 퇴근 보고를 paste하면
+        오늘 한 일을 넣으면
         <br />이 자리에 첫 일기가 쌓여요.
       </p>
     </section>

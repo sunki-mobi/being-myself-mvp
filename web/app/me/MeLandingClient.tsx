@@ -39,8 +39,8 @@ export function MeLandingClient({
       <div className="w-full max-w-md flex flex-col bg-surface-light text-fg-light lg:rounded-3xl lg:my-8 lg:min-h-[820px] lg:shadow-xl lg:shadow-brand-200/30">
         {/* ─── HERO ─── */}
         <header
-          className="gradient-hero text-fg-dark px-6 pt-10 rounded-b-[2rem] relative overflow-hidden animate-fade-up"
-          style={{ height: 240 }}
+          className="gradient-hero text-fg-dark px-6 rounded-b-[2rem] relative overflow-hidden animate-fade-up flex flex-col justify-end"
+          style={{ height: 240, paddingBottom: 66 }}
         >
           <div className="absolute top-4 right-4 z-20 flex items-center gap-1">
             <Link
@@ -91,24 +91,17 @@ export function MeLandingClient({
           </div>
 
           <div className="relative z-10 w-3/5">
-            <p
-              style={{
-                color: "rgba(255,255,253,0.55)",
-                fontSize: 13,
-                fontWeight: 500,
-              }}
-            >
-              {displayName}님, 안녕하세요
-            </p>
             <h1
-              className="mt-2 leading-tight tracking-tight"
+              className="leading-tight tracking-tight"
               style={{ color: "#FFFFFD" }}
             >
               <span style={{ fontWeight: 500, fontSize: 22 }}>
-                소명대로 일하는 도구,
+                나에게 집중하는 시간,
               </span>
               <br />
-              <span style={{ fontWeight: 800, fontSize: 28 }}>Being</span>
+              <span style={{ fontWeight: 800, fontSize: 28 }}>
+                Being myself
+              </span>
             </h1>
           </div>
 
@@ -145,10 +138,10 @@ export function MeLandingClient({
             textTone="dark"
           />
           <ContentCard
-            href="/me/reports"
+            href="/me/report"
             tag="# 내 모습"
             title="내 보고서"
-            preview="셀프인터뷰 · 4단계 · 일기 모음"
+            preview="답변 · 셀프인터뷰 · 장기"
             delayClass="animate-fade-up-delay-2"
             bgImage="/img/list/paper.svg"
             textTone="dark"

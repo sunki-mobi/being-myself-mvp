@@ -86,7 +86,7 @@ export function GoalFormClient({
           <p className="mt-3 text-sm text-fg-light-soft leading-relaxed">
             OKR · KPI · 분기 목표 · 미션 등 무엇이든 좋아요.
             <br />
-            적어두면 일기 합성 시 퇴근 보고와 비교해드려요.
+            적어두면 일기 합성 시 오늘 한 일과 비교해드려요.
           </p>
         </header>
 

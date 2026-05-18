@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { shapeToFullReport } from "@/lib/me/baseline-adapter";
 import type { BaselineShape } from "@/lib/me/baseline-shape";
+import { LONG_TERM_PREVIEWS } from "@/lib/me/long-term-previews";
 import { MeReportClient } from "./MeReportClient";
 import type { AnswerCard } from "@/components/TodayAnswerCard";
 
@@ -39,6 +40,16 @@ export type DayEntry = {
   pairs: DayPair[];
   /** 캐시된 daily_digest.digest. 없으면 null (오늘이면 client에서 fetch). */
   digest: Digest | null;
+};
+
+/** /me/report 일기 tab에 들어가는 소명일기 entry */
+export type DiaryEntry = {
+  id: string;
+  entry_date: string;
+  ai_question: string | null;
+  ai_question_source: string | null;
+  answer: string | null;
+  free_note: string | null;
 };
 
 function kstDateOf(timestamp: string): string {
@@ -87,10 +98,10 @@ export default async function MeReportPage() {
     user.email?.split("@")[0] ||
     "친구";
 
-  // qa_pair 전체 + answer_card · daily_digest 별도 조회 후 client-side merge.
-  // join syntax(`answer_card(card)`)는 supabase의 inverse 1:1 추론에 의존
-  // 하므로 안전하게 분리. 11명 규모라 query 3개 비용 무시 가능.
-  const [qaRes, cardRes, digestRes] = await Promise.all([
+  // qa_pair 전체 + answer_card · daily_digest · somyeong_entries 별도 조회 후
+  // client-side merge. join syntax(`answer_card(card)`)는 supabase의 inverse
+  // 1:1 추론에 의존하므로 안전하게 분리. 11명 규모라 query 4개 비용 무시 가능.
+  const [qaRes, cardRes, digestRes, diaryRes] = await Promise.all([
     supabase
       .from("qa_pair")
       .select("id, question_text, answer_text, created_at, question_index")
@@ -104,6 +115,11 @@ export default async function MeReportPage() {
       .from("daily_digest")
       .select("digest_date, digest")
       .eq("user_id", user.id),
+    supabase
+      .from("somyeong_entries")
+      .select("id, entry_date, ai_question, ai_question_source, answer, free_note")
+      .eq("user_id", user.id)
+      .order("entry_date", { ascending: false }),
   ]);
 
   if (qaRes.error) {
@@ -121,10 +137,17 @@ export default async function MeReportPage() {
       digestRes.error.message,
     );
   }
+  if (diaryRes.error) {
+    console.warn(
+      "[/me/report] somyeong_entries query error:",
+      diaryRes.error.message,
+    );
+  }
 
   const qaRows = qaRes.data ?? [];
   const cardRows = cardRes.data ?? [];
   const digestRows = digestRes.data ?? [];
+  const diaryEntries = (diaryRes.data ?? []) as DiaryEntry[];
 
   const cardByQaPairId = new Map<string, AnswerCard>();
   for (const c of cardRows) {
@@ -183,11 +206,20 @@ export default async function MeReportPage() {
   const shape = baselineRow.report as BaselineShape;
   const baseline = shapeToFullReport(shape, { userName: displayName });
 
+  // 장기 보고서 — 본인 누적 합성은 아직 비활성, preview로 양식만 보여줌.
+  // (이후 본인 누적 합성 활성화 시 baseline_report + qa_pair 기반으로 교체)
+  const longTermPreview = {
+    ...LONG_TERM_PREVIEWS.worker,
+    userName: displayName,
+  };
+
   return (
     <MeReportClient
       baseline={baseline}
       today={today}
       history={history}
+      longTermPreview={longTermPreview}
+      diaryEntries={diaryEntries}
     />
   );
 }

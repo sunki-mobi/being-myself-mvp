@@ -99,7 +99,7 @@ export function NewDiaryClient({
   async function handleSynthesize() {
     setError(null);
     if (eveningReport.trim().length < 30) {
-      setError("퇴근 보고를 최소 30자 이상 입력해주세요.");
+      setError("오늘 한 일을 최소 30자 이상 입력해주세요.");
       return;
     }
     setPhase("synthesizing");
@@ -218,7 +218,7 @@ export function NewDiaryClient({
 function Header({ phase, onBack }: { phase: Phase; onBack: () => void }) {
   const label =
     phase === "paste" || phase === "synthesizing"
-      ? "1. 퇴근 보고 붙여넣기"
+      ? "1. 오늘 한 일 넣기"
       : phase === "review"
         ? "2. 오늘 한 일의 의미"
         : phase === "choose"
@@ -279,7 +279,7 @@ function PasteStep({
         통째로 붙여넣어 주세요
       </h1>
       <p className="mt-3 text-sm text-fg-light-soft leading-relaxed">
-        퇴근 보고·메모 어떤 형식이든 OK. 시간대와 일이 묶여 있으면 더 풍부해요.
+        메모 어떤 형식이든 OK. 시간대와 일이 묶여 있으면 더 풍부해요.
         <br />
         AI가 OKR과 회사 미션에 닿은 일들로 의미를 정리해줘요.
       </p>
@@ -294,7 +294,7 @@ function PasteStep({
               💡 내 목표 등록하면 더 정확해져요
             </p>
             <p className="text-xs text-fg-light-soft leading-relaxed">
-              OKR·KPI·분기 목표를 적어두면 AI가 퇴근 보고와 비교해드려요.
+              OKR·KPI·분기 목표를 적어두면 AI가 오늘 한 일과 비교해드려요.
             </p>
           </div>
           <span aria-hidden className="text-lg text-purple-deep">

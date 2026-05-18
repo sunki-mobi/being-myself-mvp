@@ -274,7 +274,7 @@ export async function POST(request: Request) {
   } catch (err) {
     return Response.json(
       {
-        error: "퇴근 보고를 최소 30자 이상 입력해주세요.",
+        error: "오늘 한 일을 최소 30자 이상 입력해주세요.",
         detail: String(err),
       },
       { status: 400 },
