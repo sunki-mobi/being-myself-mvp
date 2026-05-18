@@ -29,6 +29,11 @@ type Body = {
   reactionText?: unknown;
   answerText?: unknown;
   isLast?: unknown;
+  /**
+   * 풀(lib/me/question-pool.ts)에서 선택된 질문 id. Q2 turn만 채워지며 Q1·
+   * 풀 외 turn은 빈 문자열 또는 미지정 → DB에 NULL로 저장.
+   */
+  questionId?: unknown;
 };
 
 function badRequest(message: string) {
@@ -60,6 +65,10 @@ export async function POST(request: NextRequest) {
       ? body.reactionText.trim()
       : null;
   const isLast = body.isLast === true;
+  const questionId =
+    typeof body.questionId === "string" && body.questionId.trim().length > 0
+      ? body.questionId.trim()
+      : null;
 
   if (!conversationId) return badRequest("conversationId is required");
   if (questionIndex === null || questionIndex < 0)
@@ -97,6 +106,7 @@ export async function POST(request: NextRequest) {
       question_text: questionText,
       reaction_text: reactionText,
       answer_text: answerText,
+      question_id: questionId,
     })
     .select("id")
     .single();

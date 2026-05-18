@@ -12,6 +12,14 @@ import {
   type BaselineShape,
   summarizeBaselineShape,
 } from "@/lib/me/baseline-shape";
+import {
+  filterUnused,
+  scoreQuestion,
+  QUESTION_POOL,
+  CATEGORY_NAMES,
+  RECENT_DEDUP_WINDOW,
+  type Question,
+} from "@/lib/me/question-pool";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -105,6 +113,16 @@ const responseSchema = z.object({
     .describe(
       "두 번째 사용자 답변 직후이면 true (이 때 question은 빈 문자열). 첫 답변까지는 false. 3턴 이상으로 늘리지 말 것.",
     ),
+  /**
+   * Q2 turn(turn=1)에서 풀 후보 중 어떤 질문을 골랐는지 id. 풀에서 그대로
+   * 가져왔으면 그 id(예: "Q017"), 미세 변형해도 같은 id 유지. 풀 외 자유
+   * 생성(Q1 turn 또는 후보 모두 부적절 시)이면 빈 문자열.
+   */
+  selectedQuestionId: z
+    .string()
+    .describe(
+      'Q2에서 풀 후보 중 선택한 질문 id(예: "Q017"). Q1·마무리·후보 부적절 시 빈 문자열.',
+    ),
   suggestedAnswers: z
     .array(z.string())
     .max(2)
@@ -112,6 +130,29 @@ const responseSchema = z.object({
       "demo 모드일 때 question에 대한 빠른 답변 후보 1~2개 (3개는 본 콘텐츠 결을 해침). 한 문장씩, 자연스러운 톤. 첫 질문(history 비어있는 turn)부터 매 turn마다 채움. me 모드 또는 isComplete=true일 때는 빈 배열.",
     ),
 });
+
+/**
+ * 풀에서 후보 N개 뽑아 LLM에 전달할 텍스트 블록 생성.
+ * id · 카테고리 · 본문 · tag 요약(여정·깊이)을 한 줄씩.
+ */
+function formatQuestionCandidates(candidates: Question[]): string {
+  const lines: string[] = [
+    "[★ Q2 질문 후보 — 아래 list 중 1개 선택 ★]",
+    "사용자 컨텍스트(직전 답변 / baseline / 일기)와 가장 결이 맞는 1개를 골라",
+    "question 필드에 그대로 또는 사용자 표현 한 조각만 살짝 녹여 넣으세요.",
+    "selectedQuestionId 필드에 선택한 id(예: Q017)를 출력하세요.",
+    "후보를 자기 마음대로 새로 만들지 마세요 — list 안에서만 선택.",
+    "",
+  ];
+  for (const q of candidates) {
+    const cat = CATEGORY_NAMES[q.category];
+    const journey = q.journey.join("·");
+    lines.push(
+      `- ${q.id} [${cat} / ${q.depth} / ${journey}] ${q.text}`,
+    );
+  }
+  return lines.join("\n");
+}
 
 export async function POST(request: Request) {
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
@@ -141,6 +182,8 @@ export async function POST(request: Request) {
   let baselineSummary: string | undefined;
   let recentAnswersContext: string | undefined;
   let recentDiaryContext: string | undefined;
+  let q2CandidatesBlock: string | undefined;
+  let q2CandidateIds: string[] = [];
 
   if (baselineId && isBaselineId(baselineId)) {
     // demo 트랙 — 페르소나 baseline (게스트도 호출 가능, 본인 데이터 조회 X)
@@ -154,7 +197,21 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (user) {
-      const [baselineRes, qaRes, diaryRes] = await Promise.all([
+      // turn=1(Q2 차례)일 때만 본인이 최근 N개 turn에 받았던 question_id 조회 —
+      // recency cooldown 차단용. N 넘긴 질문은 다시 풀에 복귀.
+      // Q1 turn(turn=0)에는 풀을 안 쓰므로 skip.
+      const usedIdsPromise =
+        userTurns === 1
+          ? supabase
+              .from("qa_pair")
+              .select("question_id, created_at")
+              .eq("user_id", user.id)
+              .not("question_id", "is", null)
+              .order("created_at", { ascending: false })
+              .limit(RECENT_DEDUP_WINDOW)
+          : Promise.resolve({ data: null as null | Array<{ question_id: string | null }> });
+
+      const [baselineRes, qaRes, diaryRes, usedIdsRes] = await Promise.all([
         supabase
           .from("baseline_report")
           .select("report")
@@ -172,6 +229,7 @@ export async function POST(request: Request) {
           .eq("user_id", user.id)
           .order("entry_date", { ascending: false })
           .limit(5),
+        usedIdsPromise,
       ]);
 
       if (baselineRes.data?.report) {
@@ -186,6 +244,32 @@ export async function POST(request: Request) {
         recentDiaryContext = formatRecentDiary(diaryRes.data);
       }
 
+      // Q2 후보 빌드 — turn=1이고 풀에 남은 게 있을 때만
+      if (userTurns === 1) {
+        const usedIds = new Set<string>(
+          (usedIdsRes.data ?? [])
+            .map((r) => r.question_id)
+            .filter((id): id is string => typeof id === "string" && id.length > 0),
+        );
+        const unused = filterUnused(usedIds);
+        if (unused.length > 0) {
+          // V1 score — journey/depth context 없이 단순 정렬 + 약한 shuffle.
+          // 같은 점수 안에서 매번 같은 순서 나오면 사용자 경험 단조로움.
+          const ranked = unused
+            .map((q) => ({ q, score: scoreQuestion(q, {}) + Math.random() * 0.4 }))
+            .sort((a, b) => b.score - a.score)
+            .slice(0, 8)
+            .map((x) => x.q);
+          q2CandidatesBlock = formatQuestionCandidates(ranked);
+          q2CandidateIds = ranked.map((q) => q.id);
+        } else {
+          // 풀 전부가 최근 cooldown 안에 들어 있는 극단 상황 — 이론상 풀 ≤ N일
+          // 때만 발생. LLM에 자유 생성하라고 신호 (풀 확장 또는 N 조정 필요).
+          q2CandidatesBlock =
+            "[Q2 풀 후보 없음]\n현재 풀이 전부 최근 cooldown(receny window) 안에 있습니다. 이번 turn은 풀 없이 자유 생성하되 selectedQuestionId는 빈 문자열로 두세요.";
+        }
+      }
+
       // 디버그 — Vercel logs에서 컨텍스트 주입 상태 확인용
       console.log("[chat] context for user:", {
         userId: user.id,
@@ -196,6 +280,10 @@ export async function POST(request: Request) {
         recentAnswersLen: recentAnswersContext?.length ?? 0,
         recentDiaryCount: diaryRes.data?.length ?? 0,
         recentDiaryLen: recentDiaryContext?.length ?? 0,
+        poolCandidateCount: q2CandidateIds.length,
+        poolTotalSize: QUESTION_POOL.length,
+        poolRecentBlockedCount: (usedIdsRes.data ?? []).length,
+        poolDedupWindow: RECENT_DEDUP_WINDOW,
       });
     } else {
       console.log("[chat] no user — me track called without auth", {
@@ -214,6 +302,7 @@ export async function POST(request: Request) {
         recentAnswers: recentAnswersContext,
         recentDiary: recentDiaryContext,
         mode,
+        q2Candidates: q2CandidatesBlock,
       }),
     },
     ...history.map<ModelMessage>((m) => {
@@ -247,9 +336,29 @@ export async function POST(request: Request) {
     //  1. 두 번째 답변 받았으면 무조건 마무리 ("매일 두 질문" 약속 강제)
     //  2. me 트랙(mode != "demo")은 suggestedAnswers 항상 빈 배열 — LLM이
     //     가이드 무시하고 채워도 빠른 답변 칩 노출 차단.
+    //  3. selectedQuestionId는 후보 list에 있을 때만 인정 — LLM이 환각으로
+    //     가짜 id를 만들어도 클라이언트에 깨끗한 값만 흘림.
     const isDemoMode = mode === "demo";
+    const candidateIdSet = new Set(q2CandidateIds);
+    const rawSelectedId =
+      typeof output.selectedQuestionId === "string"
+        ? output.selectedQuestionId.trim()
+        : "";
+    const validatedSelectedId =
+      rawSelectedId.length > 0 && candidateIdSet.has(rawSelectedId)
+        ? rawSelectedId
+        : "";
+
+    if (userTurns === 1 && q2CandidateIds.length > 0 && !validatedSelectedId) {
+      console.warn(
+        "[chat] turn=1 but selectedQuestionId not in candidates",
+        { raw: rawSelectedId, candidateCount: q2CandidateIds.length },
+      );
+    }
+
     const finalOutput = {
       ...output,
+      selectedQuestionId: validatedSelectedId,
       suggestedAnswers: isDemoMode ? output.suggestedAnswers : [],
     };
 
@@ -258,6 +367,7 @@ export async function POST(request: Request) {
         ...finalOutput,
         isComplete: true,
         question: "",
+        selectedQuestionId: "",
         suggestedAnswers: [],
       });
     }

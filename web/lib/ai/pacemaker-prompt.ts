@@ -104,6 +104,11 @@ export function buildContextHeader(args: {
   /** 최근 소명일기 entry 텍스트 list (Q1 깊이 자료) */
   recentDiary?: string;
   mode?: "me" | "demo";
+  /**
+   * Q2 turn에서만 채워짐 — 풀에서 사용자가 받은 적 없는 후보 5~10개 텍스트.
+   * 주어지면 LLM은 이 안에서만 1개 골라 question 필드에 넣고 id 출력.
+   */
+  q2Candidates?: string;
 }): string {
   const head = `[현재 세션]
 - 사용자 이름: ${args.userName}
@@ -137,10 +142,34 @@ export function buildContextHeader(args: {
     out += `\n\n[컨텍스트 비어 있음] 누적 데이터 없음. Q1·Q2 모두 일반 톤(서로 다른 영역의 1단계 현상 질문 2개)으로.`;
   }
 
-  // Q2 차례(turn=1)일 때 — LLM이 history의 Q1을 같은 카테고리로 이어가려는
-  // 경향 차단. 사용자 답변 받아서 다른 카테고리로 이끄는 게 정답.
+  // Q2 차례(turn=1) — 풀에서 1개 선택. q2Candidates가 있으면 풀 기반,
+  // 없으면(demo 트랙 등) 기존 카테고리 분리 가이드로 fallback.
   if (args.turn === 1) {
-    out += `
+    if (args.q2Candidates) {
+      out += `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[★★★ 지금 Q2 차례 — 풀 후보 중 1개 선택 ★★★]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${args.q2Candidates}
+
+▶ **선택 기준**:
+1. 직전 사용자 답변·baseline·일기와 **결이 맞는** 1개
+2. 직전 Q1과 다른 각도(영역·깊이·시간)면 더 좋음
+3. 결정 못 하겠으면 list 상단(상위 점수) 쪽 우선
+
+▶ **출력**:
+- question 필드: 후보 본문을 그대로 또는 사용자 표현 한 조각만 살짝 녹여서 (전면 재작성 X)
+- selectedQuestionId 필드: 선택한 id 그대로 (예: "Q017")
+- reaction 필드: 직전 답변 한 조각 인용한 1문장
+
+🚫 **금지**:
+- list 밖의 질문 자유 생성 (반드시 후보 중 1개)
+- 같은 turn에 후보 여러 개 합치기
+- id 빈 문자열로 두기 (선택 못 한 경우만 빈 문자열, 그 외엔 반드시 채울 것)`;
+    } else {
+      out += `
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [★★★ 지금 Q2 차례 — 매우 중요 ★★★]
@@ -155,10 +184,12 @@ export function buildContextHeader(args: {
 - 가로 이동: 같은 층 다른 카테고리 (예: 경험탐색 → 과거성공)
 
 🚫 **절대 금지**: Q1과 같은 카테고리.
-- Q1이 "어떤 순간이었어요?"(경험탐색)였으면 Q2가 "또 다른 순간은?", "다른 좋았던 일은?" 같은 경험탐색 X
-- Q1이 본질추출이었으면 Q2가 또 다른 본질추출 X
 
-**한 줄 점검**: Q2 작성 후 스스로 물어보세요 — "이 질문이 Q1과 같은 카테고리인가?" Yes면 다른 카테고리로 다시 만드세요.`;
+selectedQuestionId는 빈 문자열로 두세요(풀 미사용 turn).`;
+    }
+  } else {
+    // Q1 또는 마무리 turn — selectedQuestionId는 빈 문자열
+    out += `\n\n[selectedQuestionId 안내] 이번 turn은 풀 사용 turn이 아닙니다. selectedQuestionId는 빈 문자열로 두세요.`;
   }
 
   return out;

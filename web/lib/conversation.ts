@@ -26,6 +26,12 @@ export type ConversationMessage = {
    */
   suggestedAnswers?: string[];
   /**
+   * ai-question일 때만 있음 — 풀에서 선택된 question id (예: "Q017"). Q2 turn
+   * 에서 chat API가 채워줌. 풀 미사용 turn(Q1·풀 소진)에는 빈 문자열/undefined.
+   * qa-pair POST 시 함께 보내 DB에 누적 → 다음 호출에서 영구 중복 차단.
+   */
+  selectedQuestionId?: string;
+  /**
    * user-answer일 때만 있음. POST /api/me/qa-pairs 응답 후 채워짐.
    * answer-card 캐시 키로 사용. /demo 트랙은 채워지지 않음 (persistTurns false).
    */
@@ -148,6 +154,8 @@ function persistQaPair(
     reactionText: string | null;
     answerText: string;
     isLast: boolean;
+    /** Q2 turn에서 풀 선택된 id. 빈 문자열이면 DB에는 null로 저장. */
+    questionId?: string;
   },
   onPersisted?: (qaPairId: string) => void,
 ) {
@@ -183,6 +191,8 @@ type ChatTurn = {
   question: string;
   isComplete: boolean;
   suggestedAnswers: string[];
+  /** Q2 turn에서 풀 선택된 id. 풀 외 turn은 빈 문자열. */
+  selectedQuestionId?: string;
 };
 
 async function callPacemaker(
@@ -290,6 +300,7 @@ export function useConversation(options: ConversationOptions = {}) {
           role: "ai-question",
           text: turn.question,
           suggestedAnswers: turn.suggestedAnswers,
+          selectedQuestionId: turn.selectedQuestionId ?? "",
         });
         const next: ConversationState = {
           ...prev,
@@ -333,6 +344,8 @@ export function useConversation(options: ConversationOptions = {}) {
       );
       const questionIndex = aiQuestions.length - 1;
       const questionText = aiQuestions[questionIndex]?.text ?? "";
+      // 지금 답한 질문이 풀에서 선택된 거면 id 가지고 있음 — qa-pair POST에 동봉.
+      const answeredQuestionId = aiQuestions[questionIndex]?.selectedQuestionId ?? "";
       const optimistic: ConversationMessage[] = [
         ...state.messages,
         { role: "user-answer", text: trimmed, questionIndex },
@@ -387,6 +400,7 @@ export function useConversation(options: ConversationOptions = {}) {
               reactionText: null,
               answerText: trimmed,
               isLast: !justAnsweredFirst,
+              questionId: answeredQuestionId,
             },
             (qaPairId) => attachQaPairId(setState, storageKey, questionIndex, trimmed, qaPairId),
           );
@@ -407,6 +421,7 @@ export function useConversation(options: ConversationOptions = {}) {
               role: "ai-question",
               text: turn.question,
               suggestedAnswers: turn.suggestedAnswers,
+              selectedQuestionId: turn.selectedQuestionId ?? "",
             });
           }
           const next: ConversationState = {
@@ -427,6 +442,7 @@ export function useConversation(options: ConversationOptions = {}) {
               reactionText: turn.reaction.trim() ? turn.reaction.trim() : null,
               answerText: trimmed,
               isLast: turn.isComplete,
+              questionId: answeredQuestionId,
             },
             (qaPairId) => attachQaPairId(setState, storageKey, questionIndex, trimmed, qaPairId),
           );
