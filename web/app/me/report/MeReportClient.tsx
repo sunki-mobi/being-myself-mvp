@@ -15,13 +15,19 @@ import { useAnswerCards } from "@/lib/me/use-answer-cards";
 import type { DayEntry, DayPair, Digest } from "./page";
 
 /**
- * /me/report client — 오늘의 답변 + 이전 답변 더보기.
+ * /me/report client — 날짜 chip + 선택된 하루 답변.
  *
- * Server에서 baseline + qa_pair + digest 캐시 그룹화 후 전달.
- *  - today != null: 오늘 Q/A list + digest (캐시 hit이면 즉시, miss이면 client
- *    에서 /api/me/digest fetch → daily_digest 캐시에 저장)
- *  - today == null: "오늘의 답변 시작하기" CTA + history 자동 펼침
- *  - history: 날짜별 collapsible (날짜 클릭 → 그날 Q/A + digest 펼침)
+ * V2 UX (피드백 반영): 이전 답변 stacked accordion → 가로 스크롤 날짜 chip strip.
+ * 사용자가 chip 하나를 누르면 그 날의 답변 카드 + digest로 swap.
+ *
+ * - today != null이면 default 선택, 없으면 가장 최근 history 날
+ * - digest: today 선택 + 캐시 miss이면 /api/me/digest fetch (기존 로직 유지).
+ *   과거 날짜는 daily_digest 캐시만 사용 — 미스인 경우 정리 카드는 숨김
+ *   (LLM 재호출 X, 비용·UI 단순성 우선).
+ * - answer_card: 선택된 날의 cache miss pair만 client fetch
+ *
+ * 누적 100일+이면 가로 스크롤이 길어지는 한계 있음 — 추후 디자인 재구상 시점에
+ * 다시 고민.
  */
 export function MeReportClient({
   baseline,
@@ -34,6 +40,30 @@ export function MeReportClient({
 }) {
   const router = useRouter();
   const hasToday = today != null && today.pairs.length > 0;
+
+  // 오늘 + 과거를 하나의 list로 (최신 순). chip strip rendering 기반.
+  const allDays = useMemo<DayEntry[]>(
+    () => (today ? [today, ...history] : history),
+    [today, history],
+  );
+  const todayDateStr = today?.date ?? null;
+
+  const [selectedDate, setSelectedDate] = useState<string>(
+    today?.date ?? history[0]?.date ?? "",
+  );
+
+  // 서버 데이터 갱신(?fresh=1 refresh 후)에 따라 default 재조정
+  useEffect(() => {
+    if (selectedDate && allDays.some((d) => d.date === selectedDate)) return;
+    setSelectedDate(today?.date ?? history[0]?.date ?? "");
+  }, [allDays, selectedDate, today?.date, history]);
+
+  const selectedDay = useMemo(
+    () => allDays.find((d) => d.date === selectedDate) ?? null,
+    [allDays, selectedDate],
+  );
+  const isSelectedToday =
+    selectedDay != null && selectedDay.date === todayDateStr;
 
   // ConversationStage에서 답변 완료 후 ?fresh=1로 진입 시 한 번 server refresh.
   // qa_pair POST가 fire-and-forget이라 redirect 시점에 DB write가 약간 늦을
@@ -51,42 +81,19 @@ export function MeReportClient({
     return () => clearTimeout(t);
   }, [router]);
 
-  // 이전 답변 — 오늘 답변 안 했으면 자동 펼침, 답변 했으면 접힘
-  const [historyExpanded, setHistoryExpanded] = useState(!hasToday);
-  const [expandedDays, setExpandedDays] = useState<Set<string>>(new Set());
-
-  // 펼친 history 날짜 list
-  const expandedHistoryEntries = useMemo(
-    () => history.filter((d) => expandedDays.has(d.date)),
-    [history, expandedDays],
-  );
-
   // answer_card 캐시 miss된 pair → client에서 fetch + DB 저장.
-  // today는 항상, history는 사용자가 펼친 날짜만 fetch (LLM 비용 절약).
+  // 선택된 날 한 개만 처리 — chip 갈아탈 때마다 새로 fetch (LLM 비용 절약).
   const pairsForCards = useMemo(() => {
-    const list: {
-      question: string;
-      answer: string;
-      key: string;
-      qaPairId: string;
-    }[] = [];
-    const entries: DayEntry[] = [];
-    if (today) entries.push(today);
-    entries.push(...expandedHistoryEntries);
-    for (const day of entries) {
-      for (const p of day.pairs) {
-        if (!p.answerCard) {
-          list.push({
-            question: p.question,
-            answer: p.answer,
-            key: p.qaPairId,
-            qaPairId: p.qaPairId,
-          });
-        }
-      }
-    }
-    return list;
-  }, [today, expandedHistoryEntries]);
+    if (!selectedDay) return [];
+    return selectedDay.pairs
+      .filter((p) => !p.answerCard)
+      .map((p) => ({
+        question: p.question,
+        answer: p.answer,
+        key: p.qaPairId,
+        qaPairId: p.qaPairId,
+      }));
+  }, [selectedDay]);
 
   const { cards: clientCards, loading: cardLoading } = useAnswerCards(
     pairsForCards,
@@ -100,7 +107,8 @@ export function MeReportClient({
     return !pair.answerCard && Boolean(cardLoading[pair.qaPairId]);
   }
 
-  // 오늘 digest 캐시 hit이면 그대로, miss이면 client에서 fetch
+  // 오늘 digest 캐시 hit이면 그대로, miss이면 client에서 fetch.
+  // 과거 날짜는 daily_digest 캐시만 — 미스이면 정리 카드 그냥 숨김.
   const [todayDigest, setTodayDigest] = useState<Digest | null>(
     today?.digest ?? null,
   );
@@ -138,14 +146,10 @@ export function MeReportClient({
       .finally(() => setDigestLoading(false));
   }, [hasToday, today, baseline.userName]);
 
-  function toggleDay(date: string) {
-    setExpandedDays((prev) => {
-      const next = new Set(prev);
-      if (next.has(date)) next.delete(date);
-      else next.add(date);
-      return next;
-    });
-  }
+  // 선택된 날의 digest. 오늘이면 client fetch 결과까지 반영, 과거면 서버 캐시 그대로.
+  const selectedDigest = isSelectedToday
+    ? todayDigest
+    : selectedDay?.digest ?? null;
 
   return (
     <main className="min-h-screen w-full flex justify-center bg-[#f6f4fb] lg:bg-gradient-to-b lg:from-[#f6f4fb] lg:to-[#ece8f5]">
@@ -187,60 +191,33 @@ export function MeReportClient({
         </header>
 
         <section className="flex-1 px-6 py-8 flex flex-col gap-6">
-          {hasToday && today ? (
-            <TodayBlock
-              entry={today}
-              digest={todayDigest}
-              digestLoading={digestLoading}
-              digestError={digestError}
+          {/* 오늘 답변이 없으면 CTA가 가장 먼저 보여야 함 */}
+          {!hasToday ? (
+            <EmptyTodayCta onStart={() => router.push("/me/conversation")} />
+          ) : null}
+
+          {/* 날짜 chip strip — 2일 이상 누적됐을 때만 표시 */}
+          {allDays.length >= 2 ? (
+            <DateChipStrip
+              days={allDays}
+              todayDateStr={todayDateStr}
+              selectedDate={selectedDate}
+              onSelect={setSelectedDate}
+            />
+          ) : null}
+
+          {/* 선택된 날의 답변 + digest */}
+          {selectedDay ? (
+            <SelectedDayBlock
+              entry={selectedDay}
+              isToday={isSelectedToday}
+              digest={selectedDigest}
+              digestLoading={isSelectedToday ? digestLoading : false}
+              digestError={isSelectedToday ? digestError : null}
               baseline={baseline}
               resolveCard={resolveCard}
-              cardLoading={cardLoading}
+              resolveLoading={resolveLoading}
             />
-          ) : (
-            <EmptyTodayCta onStart={() => router.push("/me/conversation")} />
-          )}
-
-          {/* 이전 답변 더보기 */}
-          {history.length > 0 ? (
-            <div className="flex flex-col gap-3 animate-fade-up-delay-2">
-              <button
-                type="button"
-                onClick={() => setHistoryExpanded((v) => !v)}
-                className="flex items-center justify-between px-2 py-1 text-left"
-              >
-                <p className="text-xs font-semibold text-fg-light-soft">
-                  이전 답변 {history.length}일
-                </p>
-                <span
-                  aria-hidden
-                  className="text-sm text-fg-light-soft transition-transform"
-                  style={{
-                    transform: historyExpanded
-                      ? "rotate(90deg)"
-                      : "rotate(0deg)",
-                  }}
-                >
-                  ▸
-                </span>
-              </button>
-
-              {historyExpanded ? (
-                <div className="flex flex-col gap-2">
-                  {history.map((entry) => (
-                    <HistoryDayRow
-                      key={entry.date}
-                      entry={entry}
-                      expanded={expandedDays.has(entry.date)}
-                      onToggle={() => toggleDay(entry.date)}
-                      baseline={baseline}
-                      resolveCard={resolveCard}
-                      resolveLoading={resolveLoading}
-                    />
-                  ))}
-                </div>
-              ) : null}
-            </div>
           ) : null}
         </section>
 
@@ -272,29 +249,71 @@ function EmptyTodayCta({ onStart }: { onStart: () => void }) {
   );
 }
 
-/* ─────────────── 오늘 블록 ─────────────── */
+/* ─────────────── 날짜 chip strip ─────────────── */
 
-function TodayBlock({
+function DateChipStrip({
+  days,
+  todayDateStr,
+  selectedDate,
+  onSelect,
+}: {
+  days: DayEntry[];
+  todayDateStr: string | null;
+  selectedDate: string;
+  onSelect: (date: string) => void;
+}) {
+  return (
+    <div className="-mx-6 px-6 overflow-x-auto animate-fade-up-delay-1">
+      <div className="flex gap-2 min-w-max pb-1">
+        {days.map((d) => {
+          const isToday = d.date === todayDateStr;
+          const isSelected = d.date === selectedDate;
+          return (
+            <button
+              key={d.date}
+              type="button"
+              onClick={() => onSelect(d.date)}
+              aria-pressed={isSelected}
+              className={
+                isSelected
+                  ? "px-3.5 py-1.5 rounded-full bg-brand-500 text-white text-xs font-semibold whitespace-nowrap transition-colors"
+                  : "px-3.5 py-1.5 rounded-full bg-surface-card border border-border-subtle text-fg-light-soft text-xs font-medium whitespace-nowrap hover:bg-brand-50 hover:border-brand-200 transition-colors"
+              }
+            >
+              {isToday ? "오늘" : d.label}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────── 선택된 하루 블록 ─────────────── */
+
+function SelectedDayBlock({
   entry,
+  isToday,
   digest,
   digestLoading,
   digestError,
   baseline,
   resolveCard,
-  cardLoading,
+  resolveLoading,
 }: {
   entry: DayEntry;
+  isToday: boolean;
   digest: Digest | null;
   digestLoading: boolean;
   digestError: string | null;
   baseline: BaselineReport;
   resolveCard: (pair: DayPair) => AnswerCard | undefined;
-  cardLoading: Record<string, boolean>;
+  resolveLoading: (pair: DayPair) => boolean;
 }) {
   return (
-    <div className="flex flex-col gap-4 animate-fade-up-delay-1">
+    <div className="flex flex-col gap-4 animate-fade-up-delay-2">
       <p className="text-xs font-semibold text-brand-600 px-1">
-        오늘 추가된 답변 · {entry.pairs.length}
+        {isToday ? "오늘 추가된 답변" : `${entry.label} 답변`} · {entry.pairs.length}
       </p>
       {entry.pairs.map((pair, idx) => (
         <TodayAnswerCard
@@ -302,7 +321,7 @@ function TodayBlock({
           index={idx + 1}
           pair={{ question: pair.question, answer: pair.answer }}
           card={resolveCard(pair)}
-          loading={Boolean(cardLoading[pair.qaPairId])}
+          loading={resolveLoading(pair)}
         />
       ))}
 
@@ -310,68 +329,6 @@ function TodayBlock({
       {digestError ? <DigestError error={digestError} /> : null}
       {digest ? <DigestCards digest={digest} baseline={baseline} /> : null}
     </div>
-  );
-}
-
-/* ─────────────── 이전 날짜 row ─────────────── */
-
-function HistoryDayRow({
-  entry,
-  expanded,
-  onToggle,
-  baseline,
-  resolveCard,
-  resolveLoading,
-}: {
-  entry: DayEntry;
-  expanded: boolean;
-  onToggle: () => void;
-  baseline: BaselineReport;
-  resolveCard: (pair: DayPair) => AnswerCard | undefined;
-  resolveLoading: (pair: DayPair) => boolean;
-}) {
-  return (
-    <article className="rounded-[12px] border border-border-line bg-surface-paper overflow-hidden">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full px-4 py-3 flex items-center justify-between hover:bg-brand-50/40 transition-colors"
-      >
-        <div className="text-left">
-          <p className="text-sm font-bold text-fg-light">{entry.label}</p>
-          <p className="text-[11px] text-fg-light-muted">
-            답변 {entry.pairs.length}개
-            {entry.digest ? " · 정리 있음" : ""}
-          </p>
-        </div>
-        <span
-          aria-hidden
-          className="text-sm text-fg-light-soft transition-transform"
-          style={{
-            transform: expanded ? "rotate(90deg)" : "rotate(0deg)",
-          }}
-        >
-          ▸
-        </span>
-      </button>
-
-      {expanded ? (
-        <div className="px-4 pb-4 pt-2 flex flex-col gap-3 border-t border-border-line">
-          {entry.pairs.map((pair, idx) => (
-            <TodayAnswerCard
-              key={pair.qaPairId}
-              index={idx + 1}
-              pair={{ question: pair.question, answer: pair.answer }}
-              card={resolveCard(pair)}
-              loading={resolveLoading(pair)}
-            />
-          ))}
-          {entry.digest ? (
-            <DigestCards digest={entry.digest} baseline={baseline} />
-          ) : null}
-        </div>
-      ) : null}
-    </article>
   );
 }
 

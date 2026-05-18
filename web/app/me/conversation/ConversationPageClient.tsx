@@ -58,7 +58,7 @@ export function ConversationPageClient({
     <ConversationStage
       conversationOptions={conversationOptions}
       userNameDisplay={state.userName}
-      onBack={() => router.push("/me")}
+      onBack={() => router.push("/me/do")}
       completePath="/me/report?fresh=1"
     />
   );
